@@ -1171,7 +1171,7 @@ int BotAISetupClient(int client, struct bot_settings_s *settings, qboolean resta
 	bot_state_t *bs;
 	int errnum;
 
-	if (!botstates[client]) botstates[client] = G_Alloc(sizeof(bot_state_t));
+	if (!botstates[client]) botstates[client] = (bot_state_t *)G_Alloc(sizeof(bot_state_t));
 	bs = botstates[client];
 
 	if (bs && bs->inuse) {
@@ -1700,7 +1700,7 @@ int BotAIShutdown( int restart ) {
 		//shutdown all the bots in the botlib
 		for (i = 0; i < MAX_CLIENTS; i++) {
 			if (botstates[i] && botstates[i]->inuse) {
-				BotAIShutdownClient(botstates[i]->client, restart);
+				BotAIShutdownClient(botstates[i]->client, (qboolean)restart);
 			}
 		}
 		//don't shutdown the bot library

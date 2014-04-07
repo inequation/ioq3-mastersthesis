@@ -947,7 +947,7 @@ static float CG_DrawTeamOverlay( float y, qboolean right, qboolean upper ) {
 			for (j = 0; j <= PW_NUM_POWERUPS; j++) {
 				if (ci->powerups & (1 << j)) {
 
-					item = BG_FindItemForPowerup( j );
+					item = BG_FindItemForPowerup( (powerup_t)j );
 
 					if (item) {
 						CG_DrawPic( xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 
@@ -1101,7 +1101,7 @@ static float CG_DrawScores( float y ) {
 
 		x = 640;
 		score = cg.snap->ps.persistant[PERS_SCORE];
-		spectator = ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR );
+		spectator = (qboolean)( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR );
 
 		// always show your score in the second box if not in first place
 		if ( s1 != score ) {
@@ -1223,7 +1223,7 @@ static float CG_DrawPowerups( float y ) {
 	// draw the icons and timers
 	x = 640 - ICON_SIZE - CHAR_WIDTH * 2;
 	for ( i = 0 ; i < active ; i++ ) {
-		item = BG_FindItemForPowerup( sorted[i] );
+		item = BG_FindItemForPowerup( (powerup_t)sorted[i] );
 
     if (item) {
 

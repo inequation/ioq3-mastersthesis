@@ -2074,7 +2074,7 @@ BotIsDead
 ==================
 */
 qboolean BotIsDead(bot_state_t *bs) {
-	return (bs->cur_ps.pm_type == PM_DEAD);
+	return (qboolean)(bs->cur_ps.pm_type == PM_DEAD);
 }
 
 /*
@@ -2098,7 +2098,7 @@ BotIntermission
 qboolean BotIntermission(bot_state_t *bs) {
 	//NOTE: we shouldn't be looking at the game code...
 	if (level.intermissiontime) return qtrue;
-	return (bs->cur_ps.pm_type == PM_FREEZE || bs->cur_ps.pm_type == PM_INTERMISSION);
+	return (qboolean)(bs->cur_ps.pm_type == PM_FREEZE || bs->cur_ps.pm_type == PM_INTERMISSION);
 }
 
 /*
@@ -2111,7 +2111,7 @@ qboolean BotInLavaOrSlime(bot_state_t *bs) {
 
 	VectorCopy(bs->origin, feet);
 	feet[2] -= 23;
-	return (trap_AAS_PointContents(feet) & (CONTENTS_LAVA|CONTENTS_SLIME));
+	return (qboolean)(trap_AAS_PointContents(feet) & (CONTENTS_LAVA|CONTENTS_SLIME));
 }
 
 /*

@@ -900,6 +900,23 @@ endif #SunOS
 
 ifndef CC
   CC=gcc
+  CXX=echo "lol: "
+endif
+
+ifndef BASEGAME_CXXFLAGS
+  BASEGAME_CXXFLAGS=$(BASEGAME_CFLAGS)
+endif
+
+ifndef MISSIONPACK_CXXFLAGS
+  MISSIONPACK_CXXFLAGS=$(MISSIONPACK_CFLAGS)
+endif
+
+ifndef SHLIBCXXFLAGS
+  SHLIBCXXFLAGS=$(SHLIBCFLAGS)
+endif
+
+ifndef CXXFLAGS
+  CXXFLAGS=$(subst -Wimplicit,,$(subst -Wstrict-prototypes,,$(CFLAGS))) -Wno-write-strings -Wno-sign-compare
 endif
 
 ifndef RANLIB
@@ -1126,15 +1143,15 @@ $(Q)$(CC) $(BASEGAME_CFLAGS) $(SHLIBCFLAGS) $(CFLAGS) $(OPTIMIZEVM) -o $@ -c $<
 $(Q)$(DO_QVM_DEP)
 endef
 
-define DO_GAME_CC
-$(echo_cmd) "GAME_CC $<"
-$(Q)$(CC) $(BASEGAME_CFLAGS) -DQAGAME $(SHLIBCFLAGS) $(CFLAGS) $(OPTIMIZEVM) -o $@ -c $<
+define DO_GAME_CXX
+$(echo_cmd) "GAME_CXX $<"
+$(Q)$(CXX) $(BASEGAME_CXXFLAGS) -DQAGAME $(SHLIBCXXFLAGS) $(CXXFLAGS) $(OPTIMIZEVM) -o $@ -c $<
 $(Q)$(DO_QVM_DEP)
 endef
 
-define DO_CGAME_CC
-$(echo_cmd) "CGAME_CC $<"
-$(Q)$(CC) $(BASEGAME_CFLAGS) -DCGAME $(SHLIBCFLAGS) $(CFLAGS) $(OPTIMIZEVM) -o $@ -c $<
+define DO_CGAME_CXX
+$(echo_cmd) "CGAME_CXX $<"
+$(Q)$(CXX) $(BASEGAME_CXXFLAGS) -DCGAME $(SHLIBCXXFLAGS) $(CXXFLAGS) $(OPTIMIZEVM) -o $@ -c $<
 $(Q)$(DO_QVM_DEP)
 endef
 
@@ -1150,15 +1167,15 @@ $(Q)$(CC) $(MISSIONPACK_CFLAGS) $(SHLIBCFLAGS) $(CFLAGS) $(OPTIMIZEVM) -o $@ -c 
 $(Q)$(DO_QVM_DEP)
 endef
 
-define DO_GAME_CC_MISSIONPACK
-$(echo_cmd) "GAME_CC_MISSIONPACK $<"
-$(Q)$(CC) $(MISSIONPACK_CFLAGS) -DQAGAME $(SHLIBCFLAGS) $(CFLAGS) $(OPTIMIZEVM) -o $@ -c $<
+define DO_GAME_CXX_MISSIONPACK
+$(echo_cmd) "GAME_CXX_MISSIONPACK $<"
+$(Q)$(CXX) $(MISSIONPACK_CXXFLAGS) -DQAGAME $(SHLIBCXXFLAGS) $(CXXFLAGS) $(OPTIMIZEVM) -o $@ -c $<
 $(Q)$(DO_QVM_DEP)
 endef
 
-define DO_CGAME_CC_MISSIONPACK
-$(echo_cmd) "CGAME_CC_MISSIONPACK $<"
-$(Q)$(CC) $(MISSIONPACK_CFLAGS) -DCGAME $(SHLIBCFLAGS) $(CFLAGS) $(OPTIMIZEVM) -o $@ -c $<
+define DO_CGAME_CXX_MISSIONPACK
+$(echo_cmd) "CGAME_CXX_MISSIONPACK $<"
+$(Q)$(CXX) $(MISSIONPACK_CXXFLAGS) -DCGAME $(SHLIBCXXFLAGS) $(CXXFLAGS) $(OPTIMIZEVM) -o $@ -c $<
 $(Q)$(DO_QVM_DEP)
 endef
 
@@ -1231,6 +1248,7 @@ targets: makedirs
 	@echo "  COMPILE_PLATFORM: $(COMPILE_PLATFORM)"
 	@echo "  COMPILE_ARCH: $(COMPILE_ARCH)"
 	@echo "  CC: $(CC)"
+	@echo "  CXX: $(CXX)"
 ifeq ($(PLATFORM),mingw32)
 	@echo "  WINDRES: $(WINDRES)"
 endif
@@ -2229,7 +2247,7 @@ Q3CGVMOBJ = $(Q3CGOBJ_:%.o=%.asm)
 
 $(B)/$(BASEGAME)/cgame$(SHLIBNAME): $(Q3CGOBJ)
 	$(echo_cmd) "LD $@"
-	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(Q3CGOBJ)
+	$(Q)$(CXX) $(CXXFLAGS) $(SHLIBLDFLAGS) -o $@ $(Q3CGOBJ)
 
 $(B)/$(BASEGAME)/vm/cgame.qvm: $(Q3CGVMOBJ) $(CGDIR)/cg_syscalls.asm $(Q3ASM)
 	$(echo_cmd) "Q3ASM $@"
@@ -2274,7 +2292,7 @@ MPCGVMOBJ = $(MPCGOBJ_:%.o=%.asm)
 
 $(B)/$(MISSIONPACK)/cgame$(SHLIBNAME): $(MPCGOBJ)
 	$(echo_cmd) "LD $@"
-	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(MPCGOBJ)
+	$(Q)$(CXX) $(CXXFLAGS) $(SHLIBLDFLAGS) -o $@ $(MPCGOBJ)
 
 $(B)/$(MISSIONPACK)/vm/cgame.qvm: $(MPCGVMOBJ) $(CGDIR)/cg_syscalls.asm $(Q3ASM)
 	$(echo_cmd) "Q3ASM $@"
@@ -2327,7 +2345,7 @@ Q3GVMOBJ = $(Q3GOBJ_:%.o=%.asm)
 
 $(B)/$(BASEGAME)/qagame$(SHLIBNAME): $(Q3GOBJ)
 	$(echo_cmd) "LD $@"
-	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(Q3GOBJ)
+	$(Q)$(CXX) $(CXXFLAGS) $(SHLIBLDFLAGS) -o $@ $(Q3GOBJ)
 
 $(B)/$(BASEGAME)/vm/qagame.qvm: $(Q3GVMOBJ) $(GDIR)/g_syscalls.asm $(Q3ASM)
 	$(echo_cmd) "Q3ASM $@"
@@ -2378,7 +2396,7 @@ MPGVMOBJ = $(MPGOBJ_:%.o=%.asm)
 
 $(B)/$(MISSIONPACK)/qagame$(SHLIBNAME): $(MPGOBJ)
 	$(echo_cmd) "LD $@"
-	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(MPGOBJ)
+	$(Q)$(CXX) $(CXXFLAGS) $(SHLIBLDFLAGS) -o $@ $(MPGOBJ)
 
 $(B)/$(MISSIONPACK)/vm/qagame.qvm: $(MPGVMOBJ) $(GDIR)/g_syscalls.asm $(Q3ASM)
 	$(echo_cmd) "Q3ASM $@"
@@ -2609,10 +2627,10 @@ endif
 #############################################################################
 
 $(B)/$(BASEGAME)/cgame/bg_%.o: $(GDIR)/bg_%.c
-	$(DO_CGAME_CC)
+	$(DO_CGAME_CXX)
 
 $(B)/$(BASEGAME)/cgame/%.o: $(CGDIR)/%.c
-	$(DO_CGAME_CC)
+	$(DO_CGAME_CXX)
 
 $(B)/$(BASEGAME)/cgame/bg_%.asm: $(GDIR)/bg_%.c $(Q3LCC)
 	$(DO_CGAME_Q3LCC)
@@ -2621,10 +2639,10 @@ $(B)/$(BASEGAME)/cgame/%.asm: $(CGDIR)/%.c $(Q3LCC)
 	$(DO_CGAME_Q3LCC)
 
 $(B)/$(MISSIONPACK)/cgame/bg_%.o: $(GDIR)/bg_%.c
-	$(DO_CGAME_CC_MISSIONPACK)
+	$(DO_CGAME_CXX_MISSIONPACK)
 
 $(B)/$(MISSIONPACK)/cgame/%.o: $(CGDIR)/%.c
-	$(DO_CGAME_CC_MISSIONPACK)
+	$(DO_CGAME_CXX_MISSIONPACK)
 
 $(B)/$(MISSIONPACK)/cgame/bg_%.asm: $(GDIR)/bg_%.c $(Q3LCC)
 	$(DO_CGAME_Q3LCC_MISSIONPACK)
@@ -2634,13 +2652,13 @@ $(B)/$(MISSIONPACK)/cgame/%.asm: $(CGDIR)/%.c $(Q3LCC)
 
 
 $(B)/$(BASEGAME)/game/%.o: $(GDIR)/%.c
-	$(DO_GAME_CC)
+	$(DO_GAME_CXX)
 
 $(B)/$(BASEGAME)/game/%.asm: $(GDIR)/%.c $(Q3LCC)
 	$(DO_GAME_Q3LCC)
 
 $(B)/$(MISSIONPACK)/game/%.o: $(GDIR)/%.c
-	$(DO_GAME_CC_MISSIONPACK)
+	$(DO_GAME_CXX_MISSIONPACK)
 
 $(B)/$(MISSIONPACK)/game/%.asm: $(GDIR)/%.c $(Q3LCC)
 	$(DO_GAME_Q3LCC_MISSIONPACK)

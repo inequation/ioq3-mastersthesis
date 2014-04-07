@@ -507,7 +507,7 @@ static void CG_DrawSelectedPlayerPowerup( rectDef_t *rect, qboolean draw2D ) {
 		for (j = 0; j < PW_NUM_POWERUPS; j++) {
 			if (ci->powerups & (1 << j)) {
 				gitem_t	*item;
-				item = BG_FindItemForPowerup( j );
+				item = BG_FindItemForPowerup( (powerup_t)j );
 				if (item) {
 				  CG_DrawPic( x, y, rect->w, rect->h, trap_R_RegisterShader( item->icon ) );
 					x += 3;
@@ -869,7 +869,7 @@ static void CG_DrawAreaPowerUp(rectDef_t *rect, int align, float special, float 
 
 	// draw the icons and timers
 	for ( i = 0 ; i < active ; i++ ) {
-		item = BG_FindItemForPowerup( sorted[i] );
+		item = BG_FindItemForPowerup( (powerup_t)sorted[i] );
 
 		if (item) {
 			t = ps->powerups[ sorted[i] ];
@@ -992,11 +992,11 @@ qboolean CG_YourTeamHasFlag(void) {
 qboolean CG_OwnerDrawVisible(int flags) {
 
 	if (flags & CG_SHOW_TEAMINFO) {
-		return (cg_currentSelectedPlayer.integer == numSortedTeamPlayers);
+		return (qboolean)(cg_currentSelectedPlayer.integer == numSortedTeamPlayers);
 	}
 
 	if (flags & CG_SHOW_NOTEAMINFO) {
-		return !(cg_currentSelectedPlayer.integer == numSortedTeamPlayers);
+		return (qboolean)!(cg_currentSelectedPlayer.integer == numSortedTeamPlayers);
 	}
 
 	if (flags & CG_SHOW_OTHERTEAMHASFLAG) {
@@ -1299,7 +1299,7 @@ void CG_DrawNewTeamInfo(rectDef_t *rect, float text_x, float text_y, float scale
 			for (j = 0; j <= PW_NUM_POWERUPS; j++) {
 				if (ci->powerups & (1 << j)) {
 
-					item = BG_FindItemForPowerup( j );
+					item = BG_FindItemForPowerup( (powerup_t)j );
 
 					if (item) {
 						CG_DrawPic( xx, y, PIC_WIDTH, PIC_WIDTH, trap_R_RegisterShader( item->icon ) );
@@ -1517,7 +1517,7 @@ void CG_OwnerDraw(float x, float y, float w, float h, float text_x, float text_y
 
   switch (ownerDraw) {
   case CG_PLAYER_ARMOR_ICON:
-    CG_DrawPlayerArmorIcon(&rect, ownerDrawFlags & CG_SHOW_2DONLY);
+    CG_DrawPlayerArmorIcon(&rect, (qboolean)(ownerDrawFlags & CG_SHOW_2DONLY));
     break;
   case CG_PLAYER_ARMOR_ICON2D:
     CG_DrawPlayerArmorIcon(&rect, qtrue);
@@ -1526,7 +1526,7 @@ void CG_OwnerDraw(float x, float y, float w, float h, float text_x, float text_y
     CG_DrawPlayerArmorValue(&rect, scale, color, shader, textStyle);
     break;
   case CG_PLAYER_AMMO_ICON:
-    CG_DrawPlayerAmmoIcon(&rect, ownerDrawFlags & CG_SHOW_2DONLY);
+    CG_DrawPlayerAmmoIcon(&rect, (qboolean)(ownerDrawFlags & CG_SHOW_2DONLY));
     break;
   case CG_PLAYER_AMMO_ICON2D:
     CG_DrawPlayerAmmoIcon(&rect, qtrue);
@@ -1535,10 +1535,10 @@ void CG_OwnerDraw(float x, float y, float w, float h, float text_x, float text_y
     CG_DrawPlayerAmmoValue(&rect, scale, color, shader, textStyle);
     break;
   case CG_SELECTEDPLAYER_HEAD:
-    CG_DrawSelectedPlayerHead(&rect, ownerDrawFlags & CG_SHOW_2DONLY, qfalse);
+    CG_DrawSelectedPlayerHead(&rect, (qboolean)(ownerDrawFlags & CG_SHOW_2DONLY), qfalse);
     break;
   case CG_VOICE_HEAD:
-    CG_DrawSelectedPlayerHead(&rect, ownerDrawFlags & CG_SHOW_2DONLY, qtrue);
+    CG_DrawSelectedPlayerHead(&rect, (qboolean)(ownerDrawFlags & CG_SHOW_2DONLY), qtrue);
     break;
   case CG_VOICE_NAME:
     CG_DrawSelectedPlayerName(&rect, scale, color, qtrue, textStyle);
@@ -1562,13 +1562,13 @@ void CG_OwnerDraw(float x, float y, float w, float h, float text_x, float text_y
     CG_DrawSelectedPlayerWeapon(&rect);
     break;
   case CG_SELECTEDPLAYER_POWERUP:
-    CG_DrawSelectedPlayerPowerup(&rect, ownerDrawFlags & CG_SHOW_2DONLY);
+    CG_DrawSelectedPlayerPowerup(&rect, (qboolean)(ownerDrawFlags & CG_SHOW_2DONLY));
     break;
   case CG_PLAYER_HEAD:
-    CG_DrawPlayerHead(&rect, ownerDrawFlags & CG_SHOW_2DONLY);
+    CG_DrawPlayerHead(&rect, (qboolean)(ownerDrawFlags & CG_SHOW_2DONLY));
     break;
   case CG_PLAYER_ITEM:
-    CG_DrawPlayerItem(&rect, scale, ownerDrawFlags & CG_SHOW_2DONLY);
+    CG_DrawPlayerItem(&rect, scale, (qboolean)(ownerDrawFlags & CG_SHOW_2DONLY));
     break;
   case CG_PLAYER_SCORE:
     CG_DrawPlayerScore(&rect, scale, color, shader, textStyle);
@@ -1756,7 +1756,7 @@ CG_EventHandling
 
 */
 void CG_EventHandling(int type) {
-	cgs.eventHandling = type;
+	cgs.eventHandling = (qboolean)type;
   if (type == CGAME_EVENT_NONE) {
     CG_HideTeamMenu();
   } else if (type == CGAME_EVENT_TEAMMENU) {

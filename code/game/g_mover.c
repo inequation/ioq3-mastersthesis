@@ -247,7 +247,7 @@ qboolean G_TryPushingProxMine( gentity_t *check, gentity_t *pusher, vec3_t move,
 		VectorCopy( check->s.pos.trBase, check->r.currentOrigin );
 		trap_LinkEntity (check);
 	}
-	return ret;
+	return (qboolean)ret;
 }
 
 void G_ExplodeMissile( gentity_t *ent );
@@ -553,7 +553,7 @@ void MatchTeam( gentity_t *teamLeader, int moverState, int time ) {
 	gentity_t		*slave;
 
 	for ( slave = teamLeader ; slave ; slave = slave->teamchain ) {
-		SetMoverState( slave, moverState, time );
+		SetMoverState( slave, (moverState_t)moverState, time );
 	}
 }
 

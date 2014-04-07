@@ -931,7 +931,7 @@ void CG_NewClientInfo( int clientNum ) {
 
 	// team
 	v = Info_ValueForKey( configstring, "t" );
-	newInfo.team = atoi( v );
+	newInfo.team = (team_t)atoi( v );
 
 	// team task
 	v = Info_ValueForKey( configstring, "tt" );
@@ -939,7 +939,7 @@ void CG_NewClientInfo( int clientNum ) {
 
 	// team leader
 	v = Info_ValueForKey( configstring, "tl" );
-	newInfo.teamLeader = atoi(v);
+	newInfo.teamLeader = (qboolean)atoi(v);
 
 	v = Info_ValueForKey( configstring, "g_redteam" );
 	Q_strncpyz(newInfo.redTeam, v, MAX_TEAMNAME);
@@ -972,7 +972,7 @@ void CG_NewClientInfo( int clientNum ) {
 
 		if ( cgs.gametype >= GT_TEAM ) {
 			// keep skin name
-			slash = strchr( v, '/' );
+			slash = strchr( (char *)v, '/' );
 			if ( slash ) {
 				Q_strncpyz( newInfo.skinName, slash + 1, sizeof( newInfo.skinName ) );
 			}
@@ -1016,7 +1016,7 @@ void CG_NewClientInfo( int clientNum ) {
 
 		if ( cgs.gametype >= GT_TEAM ) {
 			// keep skin name
-			slash = strchr( v, '/' );
+			slash = strchr( (char *)v, '/' );
 			if ( slash ) {
 				Q_strncpyz( newInfo.headSkinName, slash + 1, sizeof( newInfo.headSkinName ) );
 			}
@@ -1040,7 +1040,7 @@ void CG_NewClientInfo( int clientNum ) {
 	if ( !CG_ScanForExistingClientInfo( &newInfo ) ) {
 		qboolean	forceDefer;
 
-		forceDefer = trap_MemoryRemaining() < 4000000;
+		forceDefer = (qboolean)(trap_MemoryRemaining() < 4000000);
 
 		// if we are defering loads, just have it pick the first valid
 		if ( forceDefer || (cg_deferPlayers.integer && !cg_buildScript.integer && !cg.loading ) ) {

@@ -80,7 +80,7 @@ void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles ) {
 	gentity_t	*tent;
 	qboolean noAngles;
 
-	noAngles = (angles[0] > 999999.0);
+	noAngles = (qboolean)(angles[0] > 999999.0);
 	// use temp events at source and destination to prevent the effect
 	// from getting dropped by a second player event
 	if ( player->client->sess.sessionTeam != TEAM_SPECTATOR ) {
@@ -296,7 +296,7 @@ void InitShooter( gentity_t *ent, int weapon ) {
 	ent->use = Use_Shooter;
 	ent->s.weapon = weapon;
 
-	RegisterItem( BG_FindItemForWeapon( weapon ) );
+	RegisterItem( BG_FindItemForWeapon( (weapon_t)weapon ) );
 
 	G_SetMovedir( ent->s.angles, ent->movedir );
 

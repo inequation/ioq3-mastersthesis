@@ -1152,7 +1152,7 @@ static float	CG_MachinegunSpinAngle( centity_t *cent ) {
 	if ( cent->pe.barrelSpinning == !(cent->currentState.eFlags & EF_FIRING) ) {
 		cent->pe.barrelTime = cg.time;
 		cent->pe.barrelAngle = AngleMod( angle );
-		cent->pe.barrelSpinning = !!(cent->currentState.eFlags & EF_FIRING);
+		cent->pe.barrelSpinning = (qboolean)!!(cent->currentState.eFlags & EF_FIRING);
 #ifdef MISSIONPACK
 		if ( cent->currentState.weapon == WP_CHAINGUN && !cent->pe.barrelSpinning ) {
 			trap_S_StartSound( NULL, cent->currentState.number, CHAN_WEAPON, trap_S_RegisterSound( "sound/weapons/vulcan/wvulwind.wav", qfalse ) );
@@ -1208,7 +1208,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	centity_t	*nonPredictedCent;
 	orientation_t	lerped;
 
-	weaponNum = cent->currentState.weapon;
+	weaponNum = (weapon_t)cent->currentState.weapon;
 
 	CG_RegisterWeapon( weaponNum );
 	weapon = &cg_weapons[weaponNum];
@@ -1930,7 +1930,7 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 	//
 	// impact mark
 	//
-	alphaFade = (mark == cgs.media.energyMarkShader);	// plasma fades alpha, all others fade color
+	alphaFade = (qboolean)(mark == cgs.media.energyMarkShader);	// plasma fades alpha, all others fade color
 	if ( weapon == WP_RAILGUN ) {
 		float	*color;
 

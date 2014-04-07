@@ -248,7 +248,7 @@ static int CG_TeamScoreboard( int y, team_t team, float fade, int maxClients, in
 			continue;
 		}
 
-		CG_DrawClientScore( y + lineHeight * count, score, color, fade, lineHeight == SB_NORMAL_HEIGHT );
+		CG_DrawClientScore( y + lineHeight * count, score, color, fade, (qboolean)(lineHeight == SB_NORMAL_HEIGHT) );
 
 		count++;
 	}
@@ -407,7 +407,7 @@ qboolean CG_DrawOldScoreboard( void ) {
 		// draw local client at the bottom
 		for ( i = 0 ; i < cg.numScores ; i++ ) {
 			if ( cg.scores[i].client == cg.snap->ps.clientNum ) {
-				CG_DrawClientScore( y, &cg.scores[i], fadeColor, fade, lineHeight == SB_NORMAL_HEIGHT );
+				CG_DrawClientScore( y, &cg.scores[i], fadeColor, fade, (qboolean)(lineHeight == SB_NORMAL_HEIGHT) );
 				break;
 			}
 		}

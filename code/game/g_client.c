@@ -965,7 +965,7 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 	if( isBot ) {
 		ent->r.svFlags |= SVF_BOT;
 		ent->inuse = qtrue;
-		if( !G_BotConnect( clientNum, !firstTime ) ) {
+		if( !G_BotConnect( clientNum, (qboolean)!firstTime ) ) {
 			return "BotConnectfailed";
 		}
 	}
@@ -1091,7 +1091,7 @@ void ClientSpawn(gentity_t *ent) {
 						client->sess.sessionTeam, 
 						client->pers.teamState.state, 
 						spawn_origin, spawn_angles,
-						!!(ent->r.svFlags & SVF_BOT));
+						(qboolean)!!(ent->r.svFlags & SVF_BOT));
 	}
 	else
 	{
@@ -1100,14 +1100,14 @@ void ClientSpawn(gentity_t *ent) {
 		{
 			client->pers.initialSpawn = qtrue;
 			spawnPoint = SelectInitialSpawnPoint(spawn_origin, spawn_angles,
-							     !!(ent->r.svFlags & SVF_BOT));
+							     (qboolean)!!(ent->r.svFlags & SVF_BOT));
 		}
 		else
 		{
 			// don't spawn near existing origin if possible
 			spawnPoint = SelectSpawnPoint ( 
 				client->ps.origin, 
-				spawn_origin, spawn_angles, !!(ent->r.svFlags & SVF_BOT));
+				spawn_origin, spawn_angles, (qboolean)!!(ent->r.svFlags & SVF_BOT));
 		}
 	}
 	client->pers.teamState.state = TEAM_ACTIVE;

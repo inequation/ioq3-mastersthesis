@@ -90,7 +90,7 @@ static void CG_ParseScores( void ) {
 		cg.scores[i].guantletCount = atoi(CG_Argv(i * 14 + 13));
 		cg.scores[i].defendCount = atoi(CG_Argv(i * 14 + 14));
 		cg.scores[i].assistCount = atoi(CG_Argv(i * 14 + 15));
-		cg.scores[i].perfect = atoi(CG_Argv(i * 14 + 16));
+		cg.scores[i].perfect = (qboolean)(atoi(CG_Argv(i * 14 + 16)));
 		cg.scores[i].captures = atoi(CG_Argv(i * 14 + 17));
 
 		if ( cg.scores[i].client < 0 || cg.scores[i].client >= MAX_CLIENTS ) {
@@ -157,7 +157,7 @@ void CG_ParseServerinfo( void ) {
 	char	*mapname;
 
 	info = CG_ConfigString( CS_SERVERINFO );
-	cgs.gametype = atoi( Info_ValueForKey( info, "g_gametype" ) );
+	cgs.gametype = (gametype_t)atoi( Info_ValueForKey( info, "g_gametype" ) );
 	trap_Cvar_Set("g_gametype", va("%i", cgs.gametype));
 	cgs.dmflags = atoi( Info_ValueForKey( info, "dmflags" ) );
 	cgs.teamflags = atoi( Info_ValueForKey( info, "teamflags" ) );
@@ -244,7 +244,7 @@ void CG_ShaderStateChanged(void) {
 
 	o = CG_ConfigString( CS_SHADERSTATE );
 	while (o && *o) {
-		n = strstr(o, "=");
+		n = strstr((char *)o, "=");
 		if (n && *n) {
 			strncpy(originalShader, o, n-o);
 			originalShader[n-o] = 0;
@@ -331,7 +331,7 @@ static void CG_ConfigStringModified( void ) {
 		trap_S_StartLocalSound( cgs.media.voteNow, CHAN_ANNOUNCER );
 #endif
 	} else if ( num == CS_INTERMISSION ) {
-		cg.intermissionStarted = atoi( str );
+		cg.intermissionStarted = (qboolean)atoi( str );
 	} else if ( num >= CS_MODELS && num < CS_MODELS+MAX_MODELS ) {
 		cgs.gameModels[ num-CS_MODELS ] = trap_R_RegisterModel( str );
 	} else if ( num >= CS_SOUNDS && num < CS_SOUNDS+MAX_SOUNDS ) {
@@ -947,7 +947,7 @@ void CG_VoiceChat( int mode ) {
 	int clientNum, color;
 	qboolean voiceOnly;
 
-	voiceOnly = atoi(CG_Argv(1));
+	voiceOnly = (qboolean)atoi(CG_Argv(1));
 	clientNum = atoi(CG_Argv(2));
 	color = atoi(CG_Argv(3));
 	cmd = CG_Argv(4);
