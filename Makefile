@@ -2629,39 +2629,44 @@ endif
 $(B)/$(BASEGAME)/cgame/bg_%.o: $(GDIR)/bg_%.c
 	$(DO_CGAME_CXX)
 
-$(B)/$(BASEGAME)/cgame/%.o: $(CGDIR)/%.c
+$(B)/$(BASEGAME)/cgame/%.o: $(CGDIR)/%.cpp
 	$(DO_CGAME_CXX)
 
-$(B)/$(BASEGAME)/cgame/bg_%.asm: $(GDIR)/bg_%.c $(Q3LCC)
-	$(DO_CGAME_Q3LCC)
+#$(B)/$(BASEGAME)/cgame/bg_%.asm: $(GDIR)/bg_%.c $(Q3LCC)
+#	$(DO_CGAME_Q3LCC)
 
-$(B)/$(BASEGAME)/cgame/%.asm: $(CGDIR)/%.c $(Q3LCC)
-	$(DO_CGAME_Q3LCC)
+#$(B)/$(BASEGAME)/cgame/%.asm: $(CGDIR)/%.c $(Q3LCC)
+#	$(DO_CGAME_Q3LCC)
 
 $(B)/$(MISSIONPACK)/cgame/bg_%.o: $(GDIR)/bg_%.c
 	$(DO_CGAME_CXX_MISSIONPACK)
 
-$(B)/$(MISSIONPACK)/cgame/%.o: $(CGDIR)/%.c
+$(B)/$(MISSIONPACK)/cgame/%.o: $(CGDIR)/%.cpp
 	$(DO_CGAME_CXX_MISSIONPACK)
 
-$(B)/$(MISSIONPACK)/cgame/bg_%.asm: $(GDIR)/bg_%.c $(Q3LCC)
-	$(DO_CGAME_Q3LCC_MISSIONPACK)
+#$(B)/$(MISSIONPACK)/cgame/bg_%.asm: $(GDIR)/bg_%.c $(Q3LCC)
+#	$(DO_CGAME_Q3LCC_MISSIONPACK)
 
-$(B)/$(MISSIONPACK)/cgame/%.asm: $(CGDIR)/%.c $(Q3LCC)
-	$(DO_CGAME_Q3LCC_MISSIONPACK)
+#$(B)/$(MISSIONPACK)/cgame/%.asm: $(CGDIR)/%.c $(Q3LCC)
+#	$(DO_CGAME_Q3LCC_MISSIONPACK)
 
-
-$(B)/$(BASEGAME)/game/%.o: $(GDIR)/%.c
+$(B)/$(BASEGAME)/game/bg_%.o: $(GDIR)/bg_%.c
 	$(DO_GAME_CXX)
 
-$(B)/$(BASEGAME)/game/%.asm: $(GDIR)/%.c $(Q3LCC)
-	$(DO_GAME_Q3LCC)
+$(B)/$(BASEGAME)/game/%.o: $(GDIR)/%.cpp
+	$(DO_GAME_CXX)
 
-$(B)/$(MISSIONPACK)/game/%.o: $(GDIR)/%.c
+#$(B)/$(BASEGAME)/game/%.asm: $(GDIR)/%.c $(Q3LCC)
+#	$(DO_GAME_Q3LCC)
+
+$(B)/$(MISSIONPACK)/game/bg_%.o: $(GDIR)/bg_%.c
 	$(DO_GAME_CXX_MISSIONPACK)
 
-$(B)/$(MISSIONPACK)/game/%.asm: $(GDIR)/%.c $(Q3LCC)
-	$(DO_GAME_Q3LCC_MISSIONPACK)
+$(B)/$(MISSIONPACK)/game/%.o: $(GDIR)/%.cpp
+	$(DO_GAME_CXX_MISSIONPACK)
+
+#$(B)/$(MISSIONPACK)/game/%.asm: $(GDIR)/%.c $(Q3LCC)
+#	$(DO_GAME_Q3LCC_MISSIONPACK)
 
 
 $(B)/$(BASEGAME)/ui/bg_%.o: $(GDIR)/bg_%.c
