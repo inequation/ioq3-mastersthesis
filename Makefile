@@ -18,7 +18,7 @@ ifeq ($(COMPILE_PLATFORM),darwin)
 endif
 
 ifndef BUILD_STANDALONE
-  BUILD_STANDALONE =
+  BUILD_STANDALONE =1
 endif
 ifndef BUILD_CLIENT
   BUILD_CLIENT     =

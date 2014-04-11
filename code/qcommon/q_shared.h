@@ -23,6 +23,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef __Q_SHARED_H
 #define __Q_SHARED_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // q_shared.h -- included first by ALL program modules.
 // A user mod should never modify this file
 
@@ -108,14 +112,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define UNUSED_VAR
 #endif
 
-#if (defined _MSC_VER)
-#define Q_EXPORT __declspec(dllexport)
-#elif (defined __SUNPRO_C)
-#define Q_EXPORT __global
-#elif ((__GNUC__ >= 3) && (!__EMX__) && (!sun))
-#define Q_EXPORT __attribute__((visibility("default")))
+#ifdef __cplusplus
+  #define Q_EXPORT_EXTRA extern "C"
 #else
-#define Q_EXPORT
+  #define Q_EXPORT_EXTRA
+#endif
+
+#if (defined _MSC_VER)
+#define Q_EXPORT Q_EXPORT_EXTRA (dllexport)
+#elif (defined __SUNPRO_C)
+#define Q_EXPORT Q_EXPORT_EXTRA __global
+#elif ((__GNUC__ >= 3) && (!__EMX__) && (!sun))
+#define Q_EXPORT Q_EXPORT_EXTRA __attribute__((visibility("default")))
+#else
+#define Q_EXPORT Q_EXPORT_EXTRA
 #endif
 
 /**********************************************************************
@@ -1411,5 +1421,9 @@ typedef enum _flag_status {
 
 #define LERP( a, b, w ) ( ( a ) * ( 1.0f - ( w ) ) + ( b ) * ( w ) )
 #define LUMA( red, green, blue ) ( 0.2126f * ( red ) + 0.7152f * ( green ) + 0.0722f * ( blue ) )
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	// __Q_SHARED_H
