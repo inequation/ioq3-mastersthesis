@@ -27,9 +27,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "g_local.h"
 
 
-gentity_t	*podium1;
-gentity_t	*podium2;
-gentity_t	*podium3;
+EntPtr	podium1;
+EntPtr	podium2;
+EntPtr	podium3;
 
 
 /*
@@ -39,7 +39,7 @@ UpdateTournamentInfo
 */
 void UpdateTournamentInfo( void ) {
 	int			i;
-	gentity_t	*player;
+	EntPtr	player;
 	int			playerClientNum;
 	int			n, accuracy, perfect,	msglen;
 #ifdef MISSIONPACK
@@ -135,8 +135,8 @@ void UpdateTournamentInfo( void ) {
 }
 
 
-static gentity_t *SpawnModelOnVictoryPad( gentity_t *pad, vec3_t offset, gentity_t *ent, int place ) {
-	gentity_t	*body;
+static EntPtr SpawnModelOnVictoryPad( EntPtr pad, vec3_t offset, EntPtr ent, int place ) {
+	EntPtr	body;
 	vec3_t		vec;
 	vec3_t		f, r, u;
 
@@ -199,7 +199,7 @@ static gentity_t *SpawnModelOnVictoryPad( gentity_t *pad, vec3_t offset, gentity
 }
 
 
-static void CelebrateStop( gentity_t *player ) {
+static void CelebrateStop( EntPtr player ) {
 	int		anim;
 
 	if( player->s.weapon == WP_GAUNTLET) {
@@ -213,7 +213,7 @@ static void CelebrateStop( gentity_t *player ) {
 
 
 #define	TIMER_GESTURE	(34*66+50)
-static void CelebrateStart( gentity_t *player ) {
+static void CelebrateStart( EntPtr player ) {
 	player->s.torsoAnim = ( ( player->s.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | TORSO_GESTURE;
 	player->nextthink = level.time + TIMER_GESTURE;
 	player->think = CelebrateStop;
@@ -231,7 +231,7 @@ static vec3_t	offsetFirst  = {0, 0, 74};
 static vec3_t	offsetSecond = {-10, 60, 54};
 static vec3_t	offsetThird  = {-19, -60, 45};
 
-static void PodiumPlacementThink( gentity_t *podium ) {
+static void PodiumPlacementThink( EntPtr podium ) {
 	vec3_t		vec;
 	vec3_t		origin;
 	vec3_t		f, r, u;
@@ -287,8 +287,8 @@ static void PodiumPlacementThink( gentity_t *podium ) {
 }
 
 
-static gentity_t *SpawnPodium( void ) {
-	gentity_t	*podium;
+static EntPtr SpawnPodium( void ) {
+	EntPtr	podium;
 	vec3_t		vec;
 	vec3_t		origin;
 
@@ -325,8 +325,8 @@ SpawnModelsOnVictoryPads
 ==================
 */
 void SpawnModelsOnVictoryPads( void ) {
-	gentity_t	*player;
-	gentity_t	*podium;
+	EntPtr	player;
+	EntPtr	podium;
 
 	podium1 = NULL;
 	podium2 = NULL;

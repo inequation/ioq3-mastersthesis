@@ -30,8 +30,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ScorePlum
 ============
 */
-void ScorePlum( gentity_t *ent, vec3_t origin, int score ) {
-	gentity_t *plum;
+void ScorePlum( EntPtr ent, vec3_t origin, int score ) {
+	EntPtr plum;
 
 	plum = G_TempEntity( origin, EV_SCOREPLUM );
 	// only send this temp entity to a single client
@@ -49,7 +49,7 @@ AddScore
 Adds score to both the client and his team
 ============
 */
-void AddScore( gentity_t *ent, vec3_t origin, int score ) {
+void AddScore( EntPtr ent, vec3_t origin, int score ) {
 	if ( !ent->client ) {
 		return;
 	}
@@ -73,12 +73,12 @@ TossClientItems
 Toss the weapon and powerups for the killed player
 =================
 */
-void TossClientItems( gentity_t *self ) {
+void TossClientItems( EntPtr self ) {
 	gitem_t		*item;
 	int			weapon;
 	float		angle;
 	int			i;
-	gentity_t	*drop;
+	EntPtr	drop;
 
 	// drop the weapon if not a gauntlet or machinegun
 	weapon = self->s.weapon;
@@ -133,11 +133,11 @@ void TossClientItems( gentity_t *self ) {
 TossClientCubes
 =================
 */
-extern gentity_t	*neutralObelisk;
+extern EntPtr	neutralObelisk;
 
-void TossClientCubes( gentity_t *self ) {
+void TossClientCubes( EntPtr self ) {
 	gitem_t		*item;
-	gentity_t	*drop;
+	EntPtr	drop;
 	vec3_t		velocity;
 	vec3_t		angles;
 	vec3_t		origin;
@@ -185,8 +185,8 @@ void TossClientCubes( gentity_t *self ) {
 TossClientPersistantPowerups
 =================
 */
-void TossClientPersistantPowerups( gentity_t *ent ) {
-	gentity_t	*powerup;
+void TossClientPersistantPowerups( EntPtr ent ) {
+	EntPtr	powerup;
 
 	if( !ent->client ) {
 		return;
@@ -214,7 +214,7 @@ void TossClientPersistantPowerups( gentity_t *ent ) {
 LookAtKiller
 ==================
 */
-void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker ) {
+void LookAtKiller( EntPtr self, EntPtr inflictor, EntPtr attacker ) {
 	vec3_t		dir;
 
 	if ( attacker && attacker != self ) {
@@ -234,8 +234,8 @@ void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker ) 
 GibEntity
 ==================
 */
-void GibEntity( gentity_t *self, int killer ) {
-	gentity_t *ent;
+void GibEntity( EntPtr self, int killer ) {
+	EntPtr ent;
 	int i;
 
 	//if this entity still has kamikaze
@@ -264,7 +264,7 @@ void GibEntity( gentity_t *self, int killer ) {
 body_die
 ==================
 */
-void body_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath ) {
+void body_die( EntPtr self, EntPtr inflictor, EntPtr attacker, int damage, int meansOfDeath ) {
 	if ( self->health > GIB_HEALTH ) {
 		return;
 	}
@@ -318,7 +318,7 @@ char	*modNames[] = {
 Kamikaze_DeathActivate
 ==================
 */
-void Kamikaze_DeathActivate( gentity_t *ent ) {
+void Kamikaze_DeathActivate( EntPtr ent ) {
 	G_StartKamikaze(ent);
 	G_FreeEntity(ent);
 }
@@ -328,8 +328,8 @@ void Kamikaze_DeathActivate( gentity_t *ent ) {
 Kamikaze_DeathTimer
 ==================
 */
-void Kamikaze_DeathTimer( gentity_t *self ) {
-	gentity_t *ent;
+void Kamikaze_DeathTimer( EntPtr self ) {
+	EntPtr ent;
 
 	ent = G_Spawn();
 	ent->classname = "kamikaze timer";
@@ -348,8 +348,8 @@ void Kamikaze_DeathTimer( gentity_t *self ) {
 CheckAlmostCapture
 ==================
 */
-void CheckAlmostCapture( gentity_t *self, gentity_t *attacker ) {
-	gentity_t	*ent;
+void CheckAlmostCapture( EntPtr self, EntPtr attacker ) {
+	EntPtr	ent;
 	vec3_t		dir;
 	char		*classname;
 
@@ -398,8 +398,8 @@ void CheckAlmostCapture( gentity_t *self, gentity_t *attacker ) {
 CheckAlmostScored
 ==================
 */
-void CheckAlmostScored( gentity_t *self, gentity_t *attacker ) {
-	gentity_t	*ent;
+void CheckAlmostScored( EntPtr self, EntPtr attacker ) {
+	EntPtr	ent;
 	vec3_t		dir;
 	char		*classname;
 
@@ -431,8 +431,8 @@ void CheckAlmostScored( gentity_t *self, gentity_t *attacker ) {
 player_die
 ==================
 */
-void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath ) {
-	gentity_t	*ent;
+void player_die( EntPtr self, EntPtr inflictor, EntPtr attacker, int damage, int meansOfDeath ) {
+	EntPtr	ent;
 	int			anim;
 	int			contents;
 	int			killer;
@@ -669,7 +669,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 CheckArmor
 ================
 */
-int CheckArmor (gentity_t *ent, int damage, int dflags)
+int CheckArmor (EntPtr ent, int damage, int dflags)
 {
 	gclient_t	*client;
 	int			save;
@@ -743,8 +743,8 @@ int RaySphereIntersections( vec3_t origin, float radius, vec3_t point, vec3_t di
 G_InvulnerabilityEffect
 ================
 */
-int G_InvulnerabilityEffect( gentity_t *targ, vec3_t dir, vec3_t point, vec3_t impactpoint, vec3_t bouncedir ) {
-	gentity_t	*impact;
+int G_InvulnerabilityEffect( EntPtr targ, vec3_t dir, vec3_t point, vec3_t impactpoint, vec3_t bouncedir ) {
+	EntPtr	impact;
 	vec3_t		intersections[2], vec;
 	int			n;
 
@@ -800,7 +800,7 @@ dflags		these flags are used to control how T_Damage works
 ============
 */
 
-void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
+void G_Damage( EntPtr targ, EntPtr inflictor, EntPtr attacker,
 			   vec3_t dir, vec3_t point, int damage, int dflags, int mod ) {
 	gclient_t	*client;
 	int			take;
@@ -1056,7 +1056,7 @@ Returns qtrue if the inflictor can directly damage the target.  Used for
 explosions and melee attacks.
 ============
 */
-qboolean CanDamage (gentity_t *targ, vec3_t origin) {
+qboolean CanDamage (EntPtr targ, vec3_t origin) {
 	vec3_t	dest;
 	trace_t	tr;
 	vec3_t	midpoint;
@@ -1157,10 +1157,10 @@ qboolean CanDamage (gentity_t *targ, vec3_t origin) {
 G_RadiusDamage
 ============
 */
-qboolean G_RadiusDamage ( vec3_t origin, gentity_t *attacker, float damage, float radius,
-					 gentity_t *ignore, int mod) {
+qboolean G_RadiusDamage ( vec3_t origin, EntPtr attacker, float damage, float radius,
+					 EntPtr ignore, int mod) {
 	float		points, dist;
-	gentity_t	*ent;
+	EntPtr	ent;
 	int			entityList[MAX_GENTITIES];
 	int			numListedEntities;
 	vec3_t		mins, maxs;

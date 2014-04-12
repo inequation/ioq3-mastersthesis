@@ -156,7 +156,7 @@ NULL will be returned if the end of the list is reached.
 
 =============
 */
-gentity_t *G_Find (gentity_t *from, int fieldofs, const char *match)
+EntPtr G_Find (EntPtr from, int fieldofs, const char *match)
 {
 	char	*s;
 
@@ -169,7 +169,7 @@ gentity_t *G_Find (gentity_t *from, int fieldofs, const char *match)
 	{
 		if (!from->inuse)
 			continue;
-		s = *(char **) ((byte *)from + fieldofs);
+		s = *(char **) ((byte *)(gentity_t *)from + fieldofs);
 		if (!s)
 			continue;
 		if (!Q_stricmp (s, match))
@@ -189,11 +189,11 @@ Selects a random entity from among the targets
 */
 #define MAXCHOICES	32
 
-gentity_t *G_PickTarget (char *targetname)
+EntPtr G_PickTarget (char *targetname)
 {
-	gentity_t	*ent = NULL;
+	EntPtr	ent = NULL;
 	int		num_choices = 0;
-	gentity_t	*choice[MAXCHOICES];
+	EntPtr	choice[MAXCHOICES];
 
 	if (!targetname)
 	{
@@ -232,8 +232,8 @@ match (string)self.target and call their .use function
 
 ==============================
 */
-void G_UseTargets( gentity_t *ent, gentity_t *activator ) {
-	gentity_t		*t;
+void G_UseTargets( EntPtr ent, EntPtr activator ) {
+	EntPtr		t;
 	
 	if ( !ent ) {
 		return;
@@ -364,7 +364,7 @@ float vectoyaw( const vec3_t vec ) {
 }
 
 
-void G_InitGentity( gentity_t *e ) {
+void G_InitGentity( EntPtr e ) {
 	e->inuse = qtrue;
 	e->classname = "noclass";
 	e->s.number = e - g_entities;
@@ -386,9 +386,9 @@ instead of being removed and recreated, which can cause interpolated
 angles and bad trails.
 =================
 */
-gentity_t *G_Spawn( void ) {
+EntPtr G_Spawn( void ) {
 	int			i, force;
-	gentity_t	*e;
+	EntPtr	e;
 
 	e = NULL;	// shut up warning
 	i = 0;		// shut up warning
@@ -440,7 +440,7 @@ G_EntitiesFree
 */
 qboolean G_EntitiesFree( void ) {
 	int			i;
-	gentity_t	*e;
+	EntPtr	e;
 
 	e = &g_entities[MAX_CLIENTS];
 	for ( i = MAX_CLIENTS; i < level.num_entities; i++, e++) {
@@ -461,7 +461,7 @@ G_FreeEntity
 Marks the entity as free
 =================
 */
-void G_FreeEntity( gentity_t *ed ) {
+void G_FreeEntity( EntPtr ed ) {
 	trap_UnlinkEntity (ed);		// unlink from world
 
 	if ( ed->neverFree ) {
@@ -483,8 +483,8 @@ The origin will be snapped to save net bandwidth, so care
 must be taken if the origin is right on a surface (snap towards start vector first)
 =================
 */
-gentity_t *G_TempEntity( vec3_t origin, int event ) {
-	gentity_t		*e;
+EntPtr G_TempEntity( vec3_t origin, int event ) {
+	EntPtr		e;
 	vec3_t		snapped;
 
 	e = G_Spawn();
@@ -522,10 +522,10 @@ Kills all entities that would touch the proposed new positioning
 of ent.  Ent should be unlinked before calling this!
 =================
 */
-void G_KillBox (gentity_t *ent) {
+void G_KillBox (EntPtr ent) {
 	int			i, num;
 	int			touch[MAX_GENTITIES];
-	gentity_t	*hit;
+	EntPtr	hit;
 	vec3_t		mins, maxs;
 
 	VectorAdd( ent->client->ps.origin, ent->r.mins, mins );
@@ -556,7 +556,7 @@ client side: jumppads and item pickups
 Adds an event+parm and twiddles the event counter
 ===============
 */
-void G_AddPredictableEvent( gentity_t *ent, int event, int eventParm ) {
+void G_AddPredictableEvent( EntPtr ent, int event, int eventParm ) {
 	if ( !ent->client ) {
 		return;
 	}
@@ -571,7 +571,7 @@ G_AddEvent
 Adds an event+parm and twiddles the event counter
 ===============
 */
-void G_AddEvent( gentity_t *ent, int event, int eventParm ) {
+void G_AddEvent( EntPtr ent, int event, int eventParm ) {
 	int		bits;
 
 	if ( !event ) {
@@ -601,8 +601,8 @@ void G_AddEvent( gentity_t *ent, int event, int eventParm ) {
 G_Sound
 =============
 */
-void G_Sound( gentity_t *ent, int channel, int soundIndex ) {
-	gentity_t	*te;
+void G_Sound( EntPtr ent, int channel, int soundIndex ) {
+	EntPtr	te;
 
 	te = G_TempEntity( ent->r.currentOrigin, EV_GENERAL_SOUND );
 	te->s.eventParm = soundIndex;
@@ -619,7 +619,7 @@ G_SetOrigin
 Sets the pos trajectory for a fixed position
 ================
 */
-void G_SetOrigin( gentity_t *ent, vec3_t origin ) {
+void G_SetOrigin( EntPtr ent, vec3_t origin ) {
 	VectorCopy( origin, ent->s.pos.trBase );
 	ent->s.pos.trType = TR_STATIONARY;
 	ent->s.pos.trTime = 0;

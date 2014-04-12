@@ -269,7 +269,7 @@ All but the last will have the teamchain field set to the next one
 ================
 */
 void G_FindTeams( void ) {
-	gentity_t	*e, *e2;
+	EntPtr	e, e2;
 	int		i, j;
 	int		c, c2;
 
@@ -925,7 +925,7 @@ When the intermission starts, this will be called for all players.
 If a new client connects, this will be called after the spawn function.
 ========================
 */
-void MoveClientToIntermission( gentity_t *ent ) {
+void MoveClientToIntermission( EntPtr ent ) {
 	// take out of follow mode if needed
 	if ( ent->client->sess.spectatorState == SPECTATOR_FOLLOW ) {
 		StopFollowing( ent );
@@ -958,7 +958,7 @@ This is also used for spectator spawns
 ==================
 */
 void FindIntermissionPoint( void ) {
-	gentity_t	*ent, *target;
+	EntPtr	ent, target;
 	vec3_t		dir;
 
 	// find the intermission spot
@@ -987,7 +987,7 @@ BeginIntermission
 */
 void BeginIntermission( void ) {
 	int			i;
-	gentity_t	*client;
+	EntPtr	client;
 
 	if ( level.intermissiontime ) {
 		return;		// already active
@@ -1728,7 +1728,7 @@ G_RunThink
 Runs thinking code for this frame if necessary
 =============
 */
-void G_RunThink (gentity_t *ent) {
+void G_RunThink (EntPtr ent) {
 	float	thinktime;
 
 	thinktime = ent->nextthink;
@@ -1755,7 +1755,7 @@ Advances the non-player objects in the world
 */
 void G_RunFrame( int levelTime ) {
 	int			i;
-	gentity_t	*ent;
+	EntPtr	ent;
 
 	// if we are waiting for the level to restart, do nothing
 	if ( level.restarted ) {

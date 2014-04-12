@@ -116,70 +116,70 @@ field_t fields[] = {
 
 typedef struct {
 	char	*name;
-	void	(*spawn)(gentity_t *ent);
+	void	(*spawn)(EntPtr ent);
 } spawn_t;
 
-void SP_info_player_start (gentity_t *ent);
-void SP_info_player_deathmatch (gentity_t *ent);
-void SP_info_player_intermission (gentity_t *ent);
+void SP_info_player_start (EntPtr ent);
+void SP_info_player_deathmatch (EntPtr ent);
+void SP_info_player_intermission (EntPtr ent);
 
-void SP_func_plat (gentity_t *ent);
-void SP_func_static (gentity_t *ent);
-void SP_func_rotating (gentity_t *ent);
-void SP_func_bobbing (gentity_t *ent);
-void SP_func_pendulum( gentity_t *ent );
-void SP_func_button (gentity_t *ent);
-void SP_func_door (gentity_t *ent);
-void SP_func_train (gentity_t *ent);
-void SP_func_timer (gentity_t *self);
+void SP_func_plat (EntPtr ent);
+void SP_func_static (EntPtr ent);
+void SP_func_rotating (EntPtr ent);
+void SP_func_bobbing (EntPtr ent);
+void SP_func_pendulum( EntPtr ent );
+void SP_func_button (EntPtr ent);
+void SP_func_door (EntPtr ent);
+void SP_func_train (EntPtr ent);
+void SP_func_timer (EntPtr self);
 
-void SP_trigger_always (gentity_t *ent);
-void SP_trigger_multiple (gentity_t *ent);
-void SP_trigger_push (gentity_t *ent);
-void SP_trigger_teleport (gentity_t *ent);
-void SP_trigger_hurt (gentity_t *ent);
+void SP_trigger_always (EntPtr ent);
+void SP_trigger_multiple (EntPtr ent);
+void SP_trigger_push (EntPtr ent);
+void SP_trigger_teleport (EntPtr ent);
+void SP_trigger_hurt (EntPtr ent);
 
-void SP_target_remove_powerups( gentity_t *ent );
-void SP_target_give (gentity_t *ent);
-void SP_target_delay (gentity_t *ent);
-void SP_target_speaker (gentity_t *ent);
-void SP_target_print (gentity_t *ent);
-void SP_target_laser (gentity_t *self);
-void SP_target_score( gentity_t *ent );
-void SP_target_teleporter( gentity_t *ent );
-void SP_target_relay (gentity_t *ent);
-void SP_target_kill (gentity_t *ent);
-void SP_target_position (gentity_t *ent);
-void SP_target_location (gentity_t *ent);
-void SP_target_push (gentity_t *ent);
+void SP_target_remove_powerups( EntPtr ent );
+void SP_target_give (EntPtr ent);
+void SP_target_delay (EntPtr ent);
+void SP_target_speaker (EntPtr ent);
+void SP_target_print (EntPtr ent);
+void SP_target_laser (EntPtr self);
+void SP_target_score( EntPtr ent );
+void SP_target_teleporter( EntPtr ent );
+void SP_target_relay (EntPtr ent);
+void SP_target_kill (EntPtr ent);
+void SP_target_position (EntPtr ent);
+void SP_target_location (EntPtr ent);
+void SP_target_push (EntPtr ent);
 
-void SP_light (gentity_t *self);
-void SP_info_null (gentity_t *self);
-void SP_info_notnull (gentity_t *self);
-void SP_info_camp (gentity_t *self);
-void SP_path_corner (gentity_t *self);
+void SP_light (EntPtr self);
+void SP_info_null (EntPtr self);
+void SP_info_notnull (EntPtr self);
+void SP_info_camp (EntPtr self);
+void SP_path_corner (EntPtr self);
 
-void SP_misc_teleporter_dest (gentity_t *self);
-void SP_misc_model(gentity_t *ent);
-void SP_misc_portal_camera(gentity_t *ent);
-void SP_misc_portal_surface(gentity_t *ent);
+void SP_misc_teleporter_dest (EntPtr self);
+void SP_misc_model(EntPtr ent);
+void SP_misc_portal_camera(EntPtr ent);
+void SP_misc_portal_surface(EntPtr ent);
 
-void SP_shooter_rocket( gentity_t *ent );
-void SP_shooter_plasma( gentity_t *ent );
-void SP_shooter_grenade( gentity_t *ent );
+void SP_shooter_rocket( EntPtr ent );
+void SP_shooter_plasma( EntPtr ent );
+void SP_shooter_grenade( EntPtr ent );
 
-void SP_team_CTF_redplayer( gentity_t *ent );
-void SP_team_CTF_blueplayer( gentity_t *ent );
+void SP_team_CTF_redplayer( EntPtr ent );
+void SP_team_CTF_blueplayer( EntPtr ent );
 
-void SP_team_CTF_redspawn( gentity_t *ent );
-void SP_team_CTF_bluespawn( gentity_t *ent );
+void SP_team_CTF_redspawn( EntPtr ent );
+void SP_team_CTF_bluespawn( EntPtr ent );
 
 #ifdef MISSIONPACK
-void SP_team_blueobelisk( gentity_t *ent );
-void SP_team_redobelisk( gentity_t *ent );
-void SP_team_neutralobelisk( gentity_t *ent );
+void SP_team_blueobelisk( EntPtr ent );
+void SP_team_redobelisk( EntPtr ent );
+void SP_team_neutralobelisk( EntPtr ent );
 #endif
-void SP_item_botroam( gentity_t *ent ) { }
+void SP_item_botroam( EntPtr ent ) { }
 
 spawn_t	spawns[] = {
 	// info entities don't do anything at all, but provide positional
@@ -265,7 +265,7 @@ Finds the spawn function for the entity and calls it,
 returning qfalse if not found
 ===============
 */
-qboolean G_CallSpawn( gentity_t *ent ) {
+qboolean G_CallSpawn( EntPtr ent ) {
 	spawn_t	*s;
 	gitem_t	*item;
 
@@ -340,7 +340,7 @@ Takes a key/value pair and sets the binary values
 in a gentity
 ===============
 */
-void G_ParseField( const char *key, const char *value, gentity_t *ent ) {
+void G_ParseField( const char *key, const char *value, EntPtr ent ) {
 	field_t	*f;
 	byte	*b;
 	float	v;
@@ -349,7 +349,7 @@ void G_ParseField( const char *key, const char *value, gentity_t *ent ) {
 	for ( f=fields ; f->name ; f++ ) {
 		if ( !Q_stricmp(f->name, key) ) {
 			// found it
-			b = (byte *)ent;
+			b = (byte *)(gentity_t *)ent;
 
 			switch( f->type ) {
 			case F_STRING:
@@ -396,7 +396,7 @@ level.spawnVars[], then call the class specfic spawn function
 */
 void G_SpawnGEntityFromSpawnVars( void ) {
 	int			i;
-	gentity_t	*ent;
+	EntPtr	ent;
 	char		*s, *value, *gametypeName;
 	static char *gametypeNames[] = {"ffa", "tournament", "single", "team", "ctf", "oneflag", "obelisk", "harvester"};
 

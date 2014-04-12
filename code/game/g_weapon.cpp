@@ -57,7 +57,7 @@ GAUNTLET
 ======================================================================
 */
 
-void Weapon_Gauntlet( gentity_t *ent ) {
+void Weapon_Gauntlet( EntPtr ent ) {
 
 }
 
@@ -66,11 +66,11 @@ void Weapon_Gauntlet( gentity_t *ent ) {
 CheckGauntletAttack
 ===============
 */
-qboolean CheckGauntletAttack( gentity_t *ent ) {
+qboolean CheckGauntletAttack( EntPtr ent ) {
 	trace_t		tr;
 	vec3_t		end;
-	gentity_t	*tent;
-	gentity_t	*traceEnt;
+	EntPtr		tent;
+	EntPtr		traceEnt;
 	int			damage;
 
 	// set aiming directions
@@ -161,7 +161,7 @@ void SnapVectorTowards( vec3_t v, vec3_t to ) {
 #define	MACHINEGUN_DAMAGE	7
 #define	MACHINEGUN_TEAM_DAMAGE	5		// wimpier MG in teamplay
 
-void Bullet_Fire (gentity_t *ent, float spread, int damage, int mod ) {
+void Bullet_Fire (EntPtr ent, float spread, int damage, int mod ) {
 	trace_t		tr;
 	vec3_t		end;
 #ifdef MISSIONPACK
@@ -169,8 +169,8 @@ void Bullet_Fire (gentity_t *ent, float spread, int damage, int mod ) {
 #endif
 	float		r;
 	float		u;
-	gentity_t	*tent;
-	gentity_t	*traceEnt;
+	EntPtr	tent;
+	EntPtr	traceEnt;
 	int			i, passent;
 
 	damage *= s_quadFactor;
@@ -244,8 +244,8 @@ BFG
 ======================================================================
 */
 
-void BFG_Fire ( gentity_t *ent ) {
-	gentity_t	*m;
+void BFG_Fire ( EntPtr ent ) {
+	EntPtr	m;
 
 	m = fire_bfg (ent, muzzle, forward);
 	m->damage *= s_quadFactor;
@@ -267,10 +267,10 @@ SHOTGUN
 // client predicts same spreads
 #define	DEFAULT_SHOTGUN_DAMAGE	10
 
-qboolean ShotgunPellet( vec3_t start, vec3_t end, gentity_t *ent ) {
+qboolean ShotgunPellet( vec3_t start, vec3_t end, EntPtr ent ) {
 	trace_t		tr;
 	int			damage, i, passent;
-	gentity_t	*traceEnt;
+	EntPtr	traceEnt;
 #ifdef MISSIONPACK
 	vec3_t		impactpoint, bouncedir;
 #endif
@@ -324,7 +324,7 @@ qboolean ShotgunPellet( vec3_t start, vec3_t end, gentity_t *ent ) {
 }
 
 // this should match CG_ShotgunPattern
-void ShotgunPattern( vec3_t origin, vec3_t origin2, int seed, gentity_t *ent ) {
+void ShotgunPattern( vec3_t origin, vec3_t origin2, int seed, EntPtr ent ) {
 	int			i;
 	float		r, u;
 	vec3_t		end;
@@ -352,8 +352,8 @@ void ShotgunPattern( vec3_t origin, vec3_t origin2, int seed, gentity_t *ent ) {
 }
 
 
-void weapon_supershotgun_fire (gentity_t *ent) {
-	gentity_t		*tent;
+void weapon_supershotgun_fire (EntPtr ent) {
+	EntPtr		tent;
 
 	// send shotgun blast
 	tent = G_TempEntity( muzzle, EV_SHOTGUN );
@@ -374,8 +374,8 @@ GRENADE LAUNCHER
 ======================================================================
 */
 
-void weapon_grenadelauncher_fire (gentity_t *ent) {
-	gentity_t	*m;
+void weapon_grenadelauncher_fire (EntPtr ent) {
+	EntPtr	m;
 
 	// extra vertical velocity
 	forward[2] += 0.2f;
@@ -396,8 +396,8 @@ ROCKET
 ======================================================================
 */
 
-void Weapon_RocketLauncher_Fire (gentity_t *ent) {
-	gentity_t	*m;
+void Weapon_RocketLauncher_Fire (EntPtr ent) {
+	EntPtr	m;
 
 	m = fire_rocket (ent, muzzle, forward);
 	m->damage *= s_quadFactor;
@@ -415,8 +415,8 @@ PLASMA GUN
 ======================================================================
 */
 
-void Weapon_Plasmagun_Fire (gentity_t *ent) {
-	gentity_t	*m;
+void Weapon_Plasmagun_Fire (EntPtr ent) {
+	EntPtr	m;
 
 	m = fire_plasma (ent, muzzle, forward);
 	m->damage *= s_quadFactor;
@@ -440,20 +440,20 @@ weapon_railgun_fire
 =================
 */
 #define	MAX_RAIL_HITS	4
-void weapon_railgun_fire (gentity_t *ent) {
+void weapon_railgun_fire (EntPtr ent) {
 	vec3_t		end;
 #ifdef MISSIONPACK
 	vec3_t impactpoint, bouncedir;
 #endif
 	trace_t		trace;
-	gentity_t	*tent;
-	gentity_t	*traceEnt;
+	EntPtr	tent;
+	EntPtr	traceEnt;
 	int			damage;
 	int			i;
 	int			hits;
 	int			unlinked;
 	int			passent;
-	gentity_t	*unlinkedEntities[MAX_RAIL_HITS];
+	EntPtr	unlinkedEntities[MAX_RAIL_HITS];
 
 	damage = 100 * s_quadFactor;
 
@@ -571,7 +571,7 @@ GRAPPLING HOOK
 ======================================================================
 */
 
-void Weapon_GrapplingHook_Fire (gentity_t *ent)
+void Weapon_GrapplingHook_Fire (EntPtr ent)
 {
 	if (!ent->client->fireHeld && !ent->client->hook)
 		fire_grapple (ent, muzzle, forward);
@@ -579,14 +579,14 @@ void Weapon_GrapplingHook_Fire (gentity_t *ent)
 	ent->client->fireHeld = qtrue;
 }
 
-void Weapon_HookFree (gentity_t *ent)
+void Weapon_HookFree (EntPtr ent)
 {
 	ent->parent->client->hook = NULL;
 	ent->parent->client->ps.pm_flags &= ~PMF_GRAPPLE_PULL;
 	G_FreeEntity( ent );
 }
 
-void Weapon_HookThink (gentity_t *ent)
+void Weapon_HookThink (EntPtr ent)
 {
 	if (ent->enemy) {
 		vec3_t v, oldorigin;
@@ -611,13 +611,13 @@ LIGHTNING GUN
 ======================================================================
 */
 
-void Weapon_LightningFire( gentity_t *ent ) {
+void Weapon_LightningFire( EntPtr ent ) {
 	trace_t		tr;
 	vec3_t		end;
 #ifdef MISSIONPACK
 	vec3_t impactpoint, bouncedir;
 #endif
-	gentity_t	*traceEnt, *tent;
+	EntPtr	traceEnt, tent;
 	int			damage, i, passent;
 
 	damage = 8 * s_quadFactor;
@@ -699,8 +699,8 @@ NAILGUN
 ======================================================================
 */
 
-void Weapon_Nailgun_Fire (gentity_t *ent) {
-	gentity_t	*m;
+void Weapon_Nailgun_Fire (EntPtr ent) {
+	EntPtr	m;
 	int			count;
 
 	for( count = 0; count < NUM_NAILSHOTS; count++ ) {
@@ -721,8 +721,8 @@ PROXIMITY MINE LAUNCHER
 ======================================================================
 */
 
-void weapon_proxlauncher_fire (gentity_t *ent) {
-	gentity_t	*m;
+void weapon_proxlauncher_fire (EntPtr ent) {
+	EntPtr	m;
 
 	// extra vertical velocity
 	forward[2] += 0.2f;
@@ -745,7 +745,7 @@ void weapon_proxlauncher_fire (gentity_t *ent) {
 LogAccuracyHit
 ===============
 */
-qboolean LogAccuracyHit( gentity_t *target, gentity_t *attacker ) {
+qboolean LogAccuracyHit( EntPtr target, EntPtr attacker ) {
 	if( !target->takedamage ) {
 		return qfalse;
 	}
@@ -781,7 +781,7 @@ CalcMuzzlePoint
 set muzzle location relative to pivoting eye
 ===============
 */
-void CalcMuzzlePoint ( gentity_t *ent, vec3_t forward, vec3_t right, vec3_t up, vec3_t muzzlePoint ) {
+void CalcMuzzlePoint ( EntPtr ent, vec3_t forward, vec3_t right, vec3_t up, vec3_t muzzlePoint ) {
 	VectorCopy( ent->s.pos.trBase, muzzlePoint );
 	muzzlePoint[2] += ent->client->ps.viewheight;
 	VectorMA( muzzlePoint, 14, forward, muzzlePoint );
@@ -796,7 +796,7 @@ CalcMuzzlePointOrigin
 set muzzle location relative to pivoting eye
 ===============
 */
-void CalcMuzzlePointOrigin ( gentity_t *ent, vec3_t origin, vec3_t forward, vec3_t right, vec3_t up, vec3_t muzzlePoint ) {
+void CalcMuzzlePointOrigin ( EntPtr ent, vec3_t origin, vec3_t forward, vec3_t right, vec3_t up, vec3_t muzzlePoint ) {
 	VectorCopy( ent->s.pos.trBase, muzzlePoint );
 	muzzlePoint[2] += ent->client->ps.viewheight;
 	VectorMA( muzzlePoint, 14, forward, muzzlePoint );
@@ -811,7 +811,7 @@ void CalcMuzzlePointOrigin ( gentity_t *ent, vec3_t origin, vec3_t forward, vec3
 FireWeapon
 ===============
 */
-void FireWeapon( gentity_t *ent ) {
+void FireWeapon( EntPtr ent ) {
 	if (ent->client->ps.powerups[PW_QUAD] ) {
 		s_quadFactor = g_quadfactor.value;
 	} else {
@@ -902,9 +902,9 @@ void FireWeapon( gentity_t *ent ) {
 KamikazeRadiusDamage
 ===============
 */
-static void KamikazeRadiusDamage( vec3_t origin, gentity_t *attacker, float damage, float radius ) {
+static void KamikazeRadiusDamage( vec3_t origin, EntPtr attacker, float damage, float radius ) {
 	float		dist;
-	gentity_t	*ent;
+	EntPtr	ent;
 	int			entityList[MAX_GENTITIES];
 	int			numListedEntities;
 	vec3_t		mins, maxs;
@@ -967,9 +967,9 @@ static void KamikazeRadiusDamage( vec3_t origin, gentity_t *attacker, float dama
 KamikazeShockWave
 ===============
 */
-static void KamikazeShockWave( vec3_t origin, gentity_t *attacker, float damage, float push, float radius ) {
+static void KamikazeShockWave( vec3_t origin, EntPtr attacker, float damage, float push, float radius ) {
 	float		dist;
-	gentity_t	*ent;
+	EntPtr	ent;
 	int			entityList[MAX_GENTITIES];
 	int			numListedEntities;
 	vec3_t		mins, maxs;
@@ -1033,10 +1033,10 @@ static void KamikazeShockWave( vec3_t origin, gentity_t *attacker, float damage,
 KamikazeDamage
 ===============
 */
-static void KamikazeDamage( gentity_t *self ) {
+static void KamikazeDamage( EntPtr self ) {
 	int i;
 	float t;
-	gentity_t *ent;
+	EntPtr ent;
 	vec3_t newangles;
 
 	self->count += 100;
@@ -1090,9 +1090,9 @@ static void KamikazeDamage( gentity_t *self ) {
 G_StartKamikaze
 ===============
 */
-void G_StartKamikaze( gentity_t *ent ) {
-	gentity_t	*explosion;
-	gentity_t	*te;
+void G_StartKamikaze( EntPtr ent ) {
+	EntPtr	explosion;
+	EntPtr	te;
 	vec3_t		snapped;
 
 	// start up the explosion logic

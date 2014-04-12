@@ -72,16 +72,16 @@ const char *TeamName(int team);
 const char *TeamColorString(int team);
 void AddTeamScore(vec3_t origin, int team, int score);
 
-void Team_DroppedFlagThink(gentity_t *ent);
-void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker);
-void Team_CheckHurtCarrier(gentity_t *targ, gentity_t *attacker);
+void Team_DroppedFlagThink(EntPtr ent);
+void Team_FragBonuses(EntPtr targ, EntPtr inflictor, EntPtr attacker);
+void Team_CheckHurtCarrier(EntPtr targ, EntPtr attacker);
 void Team_InitGame(void);
 void Team_ReturnFlag(int team);
-void Team_FreeEntity(gentity_t *ent);
-gentity_t *SelectCTFSpawnPoint ( team_t team, int teamstate, vec3_t origin, vec3_t angles, qboolean isbot );
-gentity_t *Team_GetLocation(gentity_t *ent);
-qboolean Team_GetLocationMsg(gentity_t *ent, char *loc, int loclen);
-void TeamplayInfoMessage( gentity_t *ent );
+void Team_FreeEntity(EntPtr ent);
+EntPtr SelectCTFSpawnPoint ( team_t team, int teamstate, vec3_t origin, vec3_t angles, qboolean isbot );
+EntPtr Team_GetLocation(EntPtr ent);
+qboolean Team_GetLocationMsg(EntPtr ent, char *loc, int loclen);
+void TeamplayInfoMessage( EntPtr ent );
 void CheckTeamStatus(void);
 
-int Pickup_Team( gentity_t *ent, gentity_t *other );
+int Pickup_Team( EntPtr ent, EntPtr other );

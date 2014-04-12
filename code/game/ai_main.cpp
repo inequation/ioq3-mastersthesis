@@ -162,7 +162,7 @@ BotAI_GetClientState
 ==================
 */
 int BotAI_GetClientState( int clientNum, playerState_t *state ) {
-	gentity_t	*ent;
+	EntPtr	ent;
 
 	ent = &g_entities[clientNum];
 	if ( !ent->inuse ) {
@@ -182,7 +182,7 @@ BotAI_GetEntityState
 ==================
 */
 int BotAI_GetEntityState( int entityNum, entityState_t *state ) {
-	gentity_t	*ent;
+	EntPtr	ent;
 
 	ent = &g_entities[entityNum];
 	memset( state, 0, sizeof(entityState_t) );
@@ -1383,7 +1383,7 @@ int BotAILoadMap( int restart ) {
 }
 
 #ifdef MISSIONPACK
-void ProximityMine_Trigger( gentity_t *trigger, gentity_t *other, trace_t *trace );
+void ProximityMine_Trigger( EntPtr trigger, EntPtr other, trace_t *trace );
 #endif
 
 /*
@@ -1393,7 +1393,7 @@ BotAIStartFrame
 */
 int BotAIStartFrame(int time) {
 	int i;
-	gentity_t	*ent;
+	EntPtr	ent;
 	bot_entitystate_t state;
 	int elapsed_time, thinktime;
 	static int local_time;

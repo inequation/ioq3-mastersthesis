@@ -27,8 +27,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 /*QUAKED target_give (1 0 0) (-8 -8 -8) (8 8 8)
 Gives the activator all the items pointed to.
 */
-void Use_Target_Give( gentity_t *ent, gentity_t *other, gentity_t *activator ) {
-	gentity_t	*t;
+void Use_Target_Give( EntPtr ent, EntPtr other, EntPtr activator ) {
+	EntPtr	t;
 	trace_t		trace;
 
 	if ( !activator->client ) {
@@ -53,7 +53,7 @@ void Use_Target_Give( gentity_t *ent, gentity_t *other, gentity_t *activator ) {
 	}
 }
 
-void SP_target_give( gentity_t *ent ) {
+void SP_target_give( EntPtr ent ) {
 	ent->use = Use_Target_Give;
 }
 
@@ -64,7 +64,7 @@ void SP_target_give( gentity_t *ent ) {
 takes away all the activators powerups.
 Used to drop flight powerups into death puts.
 */
-void Use_target_remove_powerups( gentity_t *ent, gentity_t *other, gentity_t *activator ) {
+void Use_target_remove_powerups( EntPtr ent, EntPtr other, EntPtr activator ) {
 	if( !activator->client ) {
 		return;
 	}
@@ -80,7 +80,7 @@ void Use_target_remove_powerups( gentity_t *ent, gentity_t *other, gentity_t *ac
 	memset( activator->client->ps.powerups, 0, sizeof( activator->client->ps.powerups ) );
 }
 
-void SP_target_remove_powerups( gentity_t *ent ) {
+void SP_target_remove_powerups( EntPtr ent ) {
 	ent->use = Use_target_remove_powerups;
 }
 
@@ -91,17 +91,17 @@ void SP_target_remove_powerups( gentity_t *ent ) {
 "wait" seconds to pause before firing targets.
 "random" delay variance, total delay = delay +/- random seconds
 */
-void Think_Target_Delay( gentity_t *ent ) {
+void Think_Target_Delay( EntPtr ent ) {
 	G_UseTargets( ent, ent->activator );
 }
 
-void Use_Target_Delay( gentity_t *ent, gentity_t *other, gentity_t *activator ) {
+void Use_Target_Delay( EntPtr ent, EntPtr other, EntPtr activator ) {
 	ent->nextthink = level.time + ( ent->wait + ent->random * crandom() ) * 1000;
 	ent->think = Think_Target_Delay;
 	ent->activator = activator;
 }
 
-void SP_target_delay( gentity_t *ent ) {
+void SP_target_delay( EntPtr ent ) {
 	// check delay for backwards compatability
 	if ( !G_SpawnFloat( "delay", "0", &ent->wait ) ) {
 		G_SpawnFloat( "wait", "1", &ent->wait );
@@ -121,11 +121,11 @@ void SP_target_delay( gentity_t *ent ) {
 
 The activator is given this many points.
 */
-void Use_Target_Score (gentity_t *ent, gentity_t *other, gentity_t *activator) {
+void Use_Target_Score (EntPtr ent, EntPtr other, EntPtr activator) {
 	AddScore( activator, ent->r.currentOrigin, ent->count );
 }
 
-void SP_target_score( gentity_t *ent ) {
+void SP_target_score( EntPtr ent ) {
 	if ( !ent->count ) {
 		ent->count = 1;
 	}
@@ -139,7 +139,7 @@ void SP_target_score( gentity_t *ent ) {
 "message"	text to print
 If "private", only the activator gets the message.  If no checks, all clients get the message.
 */
-void Use_Target_Print (gentity_t *ent, gentity_t *other, gentity_t *activator) {
+void Use_Target_Print (EntPtr ent, EntPtr other, EntPtr activator) {
 	if ( activator->client && ( ent->spawnflags & 4 ) ) {
 		trap_SendServerCommand( activator-g_entities, va("cp \"%s\"", ent->message ));
 		return;
@@ -158,7 +158,7 @@ void Use_Target_Print (gentity_t *ent, gentity_t *other, gentity_t *activator) {
 	trap_SendServerCommand( -1, va("cp \"%s\"", ent->message ));
 }
 
-void SP_target_print( gentity_t *ent ) {
+void SP_target_print( EntPtr ent ) {
 	ent->use = Use_Target_Print;
 }
 
@@ -178,7 +178,7 @@ Multiple identical looping sounds will just increase volume without any speed co
 "wait" : Seconds between auto triggerings, 0 = don't auto trigger
 "random"	wait variance, default is 0
 */
-void Use_Target_Speaker (gentity_t *ent, gentity_t *other, gentity_t *activator) {
+void Use_Target_Speaker (EntPtr ent, EntPtr other, EntPtr activator) {
 	if (ent->spawnflags & 3) {	// looping sound toggles
 		if (ent->s.loopSound)
 			ent->s.loopSound = 0;	// turn it off
@@ -195,7 +195,7 @@ void Use_Target_Speaker (gentity_t *ent, gentity_t *other, gentity_t *activator)
 	}
 }
 
-void SP_target_speaker( gentity_t *ent ) {
+void SP_target_speaker( EntPtr ent ) {
 	char	buffer[MAX_QPATH];
 	char	*s;
 
@@ -251,7 +251,7 @@ void SP_target_speaker( gentity_t *ent ) {
 /*QUAKED target_laser (0 .5 .8) (-8 -8 -8) (8 8 8) START_ON
 When triggered, fires a laser.  You can either set a target or a direction.
 */
-void target_laser_think (gentity_t *self) {
+void target_laser_think (EntPtr self) {
 	vec3_t	end;
 	trace_t	tr;
 	vec3_t	point;
@@ -281,20 +281,20 @@ void target_laser_think (gentity_t *self) {
 	self->nextthink = level.time + FRAMETIME;
 }
 
-void target_laser_on (gentity_t *self)
+void target_laser_on (EntPtr self)
 {
 	if (!self->activator)
 		self->activator = self;
 	target_laser_think (self);
 }
 
-void target_laser_off (gentity_t *self)
+void target_laser_off (EntPtr self)
 {
 	trap_UnlinkEntity( self );
 	self->nextthink = 0;
 }
 
-void target_laser_use (gentity_t *self, gentity_t *other, gentity_t *activator)
+void target_laser_use (EntPtr self, EntPtr other, EntPtr activator)
 {
 	self->activator = activator;
 	if ( self->nextthink > 0 )
@@ -303,9 +303,9 @@ void target_laser_use (gentity_t *self, gentity_t *other, gentity_t *activator)
 		target_laser_on (self);
 }
 
-void target_laser_start (gentity_t *self)
+void target_laser_start (EntPtr self)
 {
-	gentity_t *ent;
+	EntPtr ent;
 
 	self->s.eType = ET_BEAM;
 
@@ -332,7 +332,7 @@ void target_laser_start (gentity_t *self)
 		target_laser_off (self);
 }
 
-void SP_target_laser (gentity_t *self)
+void SP_target_laser (EntPtr self)
 {
 	// let everything else get spawned before we start firing
 	self->think = target_laser_start;
@@ -342,8 +342,8 @@ void SP_target_laser (gentity_t *self)
 
 //==========================================================
 
-void target_teleporter_use( gentity_t *self, gentity_t *other, gentity_t *activator ) {
-	gentity_t	*dest;
+void target_teleporter_use( EntPtr self, EntPtr other, EntPtr activator ) {
+	EntPtr	dest;
 
 	if (!activator->client)
 		return;
@@ -359,7 +359,7 @@ void target_teleporter_use( gentity_t *self, gentity_t *other, gentity_t *activa
 /*QUAKED target_teleporter (1 0 0) (-8 -8 -8) (8 8 8)
 The activator will be teleported away.
 */
-void SP_target_teleporter( gentity_t *self ) {
+void SP_target_teleporter( EntPtr self ) {
 	if (!self->targetname)
 		G_Printf("untargeted %s at %s\n", self->classname, vtos(self->s.origin));
 
@@ -374,7 +374,7 @@ This doesn't perform any actions except fire its targets.
 The activator can be forced to be from a certain team.
 if RANDOM is checked, only one of the targets will be fired, not all of them
 */
-void target_relay_use (gentity_t *self, gentity_t *other, gentity_t *activator) {
+void target_relay_use (EntPtr self, EntPtr other, EntPtr activator) {
 	if ( ( self->spawnflags & 1 ) && activator->client 
 		&& activator->client->sess.sessionTeam != TEAM_RED ) {
 		return;
@@ -384,7 +384,7 @@ void target_relay_use (gentity_t *self, gentity_t *other, gentity_t *activator) 
 		return;
 	}
 	if ( self->spawnflags & 4 ) {
-		gentity_t	*ent;
+		EntPtr	ent;
 
 		ent = G_PickTarget( self->target );
 		if ( ent && ent->use ) {
@@ -395,7 +395,7 @@ void target_relay_use (gentity_t *self, gentity_t *other, gentity_t *activator) 
 	G_UseTargets (self, activator);
 }
 
-void SP_target_relay (gentity_t *self) {
+void SP_target_relay (EntPtr self) {
 	self->use = target_relay_use;
 }
 
@@ -405,22 +405,22 @@ void SP_target_relay (gentity_t *self) {
 /*QUAKED target_kill (.5 .5 .5) (-8 -8 -8) (8 8 8)
 Kills the activator.
 */
-void target_kill_use( gentity_t *self, gentity_t *other, gentity_t *activator ) {
+void target_kill_use( EntPtr self, EntPtr other, EntPtr activator ) {
 	G_Damage ( activator, NULL, NULL, NULL, NULL, 100000, DAMAGE_NO_PROTECTION, MOD_TELEFRAG);
 }
 
-void SP_target_kill( gentity_t *self ) {
+void SP_target_kill( EntPtr self ) {
 	self->use = target_kill_use;
 }
 
 /*QUAKED target_position (0 0.5 0) (-4 -4 -4) (4 4 4)
 Used as a positional target for in-game calculation, like jumppad targets.
 */
-void SP_target_position( gentity_t *self ){
+void SP_target_position( EntPtr self ){
 	G_SetOrigin( self, self->s.origin );
 }
 
-static void target_location_linkup(gentity_t *ent)
+static void target_location_linkup(EntPtr ent)
 {
 	int i;
 	int n;
@@ -458,7 +458,7 @@ Set "count" to 0-7 for color.
 Closest target_location in sight used for the location, if none
 in site, closest in distance
 */
-void SP_target_location( gentity_t *self ){
+void SP_target_location( EntPtr self ){
 	self->think = target_location_linkup;
 	self->nextthink = level.time + 200;  // Let them all spawn first
 

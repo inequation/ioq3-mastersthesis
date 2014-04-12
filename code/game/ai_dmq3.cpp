@@ -3781,7 +3781,7 @@ this is ugly
 ==================
 */
 int BotModelMinsMaxs(int modelindex, int eType, int contents, vec3_t mins, vec3_t maxs) {
-	gentity_t *ent;
+	EntPtr ent;
 	int i;
 
 	ent = &g_entities[0];
@@ -5306,7 +5306,7 @@ BotSetEntityNumForGoalWithModel
 ==================
 */
 void BotSetEntityNumForGoalWithModel(bot_goal_t *goal, int eType, char *modelname) {
-	gentity_t *ent;
+	EntPtr ent;
 	int i, modelindex;
 	vec3_t dir;
 
@@ -5336,7 +5336,7 @@ BotSetEntityNumForGoal
 ==================
 */
 void BotSetEntityNumForGoal(bot_goal_t *goal, char *classname) {
-	gentity_t *ent;
+	EntPtr ent;
 	int i;
 	vec3_t dir;
 

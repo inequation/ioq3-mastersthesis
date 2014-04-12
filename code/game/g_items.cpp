@@ -46,7 +46,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 //======================================================================
 
-int Pickup_Powerup( gentity_t *ent, gentity_t *other ) {
+int Pickup_Powerup( EntPtr ent, EntPtr other ) {
 	int			quantity;
 	int			i;
 	gclient_t	*client;
@@ -118,7 +118,7 @@ int Pickup_Powerup( gentity_t *ent, gentity_t *other ) {
 //======================================================================
 
 #ifdef MISSIONPACK
-int Pickup_PersistantPowerup( gentity_t *ent, gentity_t *other ) {
+int Pickup_PersistantPowerup( EntPtr ent, EntPtr other ) {
 	int		clientNum;
 	char	userinfo[MAX_INFO_STRING];
 	float	handicap;
@@ -192,7 +192,7 @@ int Pickup_PersistantPowerup( gentity_t *ent, gentity_t *other ) {
 //======================================================================
 #endif
 
-int Pickup_Holdable( gentity_t *ent, gentity_t *other ) {
+int Pickup_Holdable( EntPtr ent, EntPtr other ) {
 
 	other->client->ps.stats[STAT_HOLDABLE_ITEM] = ent->item - bg_itemlist;
 
@@ -206,7 +206,7 @@ int Pickup_Holdable( gentity_t *ent, gentity_t *other ) {
 
 //======================================================================
 
-void Add_Ammo (gentity_t *ent, int weapon, int count)
+void Add_Ammo (EntPtr ent, int weapon, int count)
 {
 	ent->client->ps.ammo[weapon] += count;
 	if ( ent->client->ps.ammo[weapon] > 200 ) {
@@ -214,7 +214,7 @@ void Add_Ammo (gentity_t *ent, int weapon, int count)
 	}
 }
 
-int Pickup_Ammo (gentity_t *ent, gentity_t *other)
+int Pickup_Ammo (EntPtr ent, EntPtr other)
 {
 	int		quantity;
 
@@ -232,7 +232,7 @@ int Pickup_Ammo (gentity_t *ent, gentity_t *other)
 //======================================================================
 
 
-int Pickup_Weapon (gentity_t *ent, gentity_t *other) {
+int Pickup_Weapon (EntPtr ent, EntPtr other) {
 	int		quantity;
 
 	if ( ent->count < 0 ) {
@@ -275,7 +275,7 @@ int Pickup_Weapon (gentity_t *ent, gentity_t *other) {
 
 //======================================================================
 
-int Pickup_Health (gentity_t *ent, gentity_t *other) {
+int Pickup_Health (EntPtr ent, EntPtr other) {
 	int			max;
 	int			quantity;
 
@@ -314,7 +314,7 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 
 //======================================================================
 
-int Pickup_Armor( gentity_t *ent, gentity_t *other ) {
+int Pickup_Armor( EntPtr ent, EntPtr other ) {
 #ifdef MISSIONPACK
 	int		upperBound;
 
@@ -347,10 +347,10 @@ int Pickup_Armor( gentity_t *ent, gentity_t *other ) {
 RespawnItem
 ===============
 */
-void RespawnItem( gentity_t *ent ) {
+void RespawnItem( EntPtr ent ) {
 	// randomly select from teamed entities
 	if (ent->team) {
-		gentity_t	*master;
+		EntPtr	master;
 		int	count;
 		int choice;
 
@@ -375,7 +375,7 @@ void RespawnItem( gentity_t *ent ) {
 
 	if ( ent->item->giType == IT_POWERUP ) {
 		// play powerup spawn sound to all clients
-		gentity_t	*te;
+		EntPtr	te;
 
 		// if the powerup respawn sound should Not be global
 		if (ent->speed) {
@@ -390,7 +390,7 @@ void RespawnItem( gentity_t *ent ) {
 
 	if ( ent->item->giType == IT_HOLDABLE && ent->item->giTag == HI_KAMIKAZE ) {
 		// play powerup spawn sound to all clients
-		gentity_t	*te;
+		EntPtr	te;
 
 		// if the powerup respawn sound should Not be global
 		if (ent->speed) {
@@ -415,7 +415,7 @@ void RespawnItem( gentity_t *ent ) {
 Touch_Item
 ===============
 */
-void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
+void Touch_Item (EntPtr ent, EntPtr other, trace_t *trace) {
 	int			respawn;
 	qboolean	predict;
 
@@ -483,13 +483,13 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 	if ( ent->item->giType == IT_POWERUP || ent->item->giType == IT_TEAM) {
 		// if we want the global sound to play
 		if (!ent->speed) {
-			gentity_t	*te;
+			EntPtr	te;
 
 			te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_ITEM_PICKUP );
 			te->s.eventParm = ent->s.modelindex;
 			te->r.svFlags |= SVF_BROADCAST;
 		} else {
-			gentity_t	*te;
+			EntPtr	te;
 
 			te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_ITEM_PICKUP );
 			te->s.eventParm = ent->s.modelindex;
@@ -560,8 +560,8 @@ LaunchItem
 Spawns an item and tosses it forward
 ================
 */
-gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity ) {
-	gentity_t	*dropped;
+EntPtr LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity ) {
+	EntPtr	dropped;
 
 	dropped = G_Spawn();
 
@@ -610,7 +610,7 @@ Drop_Item
 Spawns an item and tosses it forward
 ================
 */
-gentity_t *Drop_Item( gentity_t *ent, gitem_t *item, float angle ) {
+EntPtr Drop_Item( EntPtr ent, gitem_t *item, float angle ) {
 	vec3_t	velocity;
 	vec3_t	angles;
 
@@ -633,7 +633,7 @@ Use_Item
 Respawn the item
 ================
 */
-void Use_Item( gentity_t *ent, gentity_t *other, gentity_t *activator ) {
+void Use_Item( EntPtr ent, EntPtr other, EntPtr activator ) {
 	RespawnItem( ent );
 }
 
@@ -647,7 +647,7 @@ Traces down to find where an item should rest, instead of letting them
 free fall from their spawn points
 ================
 */
-void FinishSpawningItem( gentity_t *ent ) {
+void FinishSpawningItem( EntPtr ent ) {
 	trace_t		tr;
 	vec3_t		dest;
 
@@ -751,7 +751,7 @@ void G_CheckTeamItems( void ) {
 	}
 
 	if( g_gametype.integer == GT_OBELISK ) {
-		gentity_t	*ent;
+		EntPtr	ent;
 
 		// check for the two obelisks
 		ent = NULL;
@@ -768,7 +768,7 @@ void G_CheckTeamItems( void ) {
 	}
 
 	if( g_gametype.integer == GT_HARVESTER ) {
-		gentity_t	*ent;
+		EntPtr	ent;
 
 		// check for all three obelisks
 		ent = NULL;
@@ -877,7 +877,7 @@ Items can't be immediately dropped to floor, because they might
 be on an entity that hasn't spawned yet.
 ============
 */
-void G_SpawnItem (gentity_t *ent, gitem_t *item) {
+void G_SpawnItem (EntPtr ent, gitem_t *item) {
 	G_SpawnFloat( "random", "0", &ent->random );
 	G_SpawnFloat( "wait", "0", &ent->wait );
 
@@ -912,7 +912,7 @@ G_BounceItem
 
 ================
 */
-void G_BounceItem( gentity_t *ent, trace_t *trace ) {
+void G_BounceItem( EntPtr ent, trace_t *trace ) {
 	vec3_t	velocity;
 	float	dot;
 	int		hitTime;
@@ -947,7 +947,7 @@ G_RunItem
 
 ================
 */
-void G_RunItem( gentity_t *ent ) {
+void G_RunItem( EntPtr ent ) {
 	vec3_t		origin;
 	trace_t		tr;
 	int			contents;

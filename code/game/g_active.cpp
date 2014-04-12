@@ -34,7 +34,7 @@ damage values to that client for pain blends and kicks, and
 global pain sound events for all clients.
 ===============
 */
-void P_DamageFeedback( gentity_t *player ) {
+void P_DamageFeedback( EntPtr player ) {
 	gclient_t	*client;
 	float	count;
 	vec3_t	angles;
@@ -96,7 +96,7 @@ P_WorldEffects
 Check for lava / slime contents and drowning
 =============
 */
-void P_WorldEffects( gentity_t *ent ) {
+void P_WorldEffects( EntPtr ent ) {
 	qboolean	envirosuit;
 	int			waterlevel;
 
@@ -172,7 +172,7 @@ void P_WorldEffects( gentity_t *ent ) {
 G_SetClientSound
 ===============
 */
-void G_SetClientSound( gentity_t *ent ) {
+void G_SetClientSound( EntPtr ent ) {
 #ifdef MISSIONPACK
 	if( ent->s.eFlags & EF_TICKING ) {
 		ent->client->ps.loopSound = G_SoundIndex( "sound/weapons/proxmine/wstbtick.wav");
@@ -195,10 +195,10 @@ void G_SetClientSound( gentity_t *ent ) {
 ClientImpacts
 ==============
 */
-void ClientImpacts( gentity_t *ent, pmove_t *pm ) {
+void ClientImpacts( EntPtr ent, pmove_t *pm ) {
 	int		i, j;
 	trace_t	trace;
-	gentity_t	*other;
+	EntPtr	other;
 
 	memset( &trace, 0, sizeof( trace ) );
 	for (i=0 ; i<pm->numtouch ; i++) {
@@ -233,10 +233,10 @@ Find all trigger entities that ent's current position touches.
 Spectators will only interact with teleporters.
 ============
 */
-void	G_TouchTriggers( gentity_t *ent ) {
+void	G_TouchTriggers( EntPtr ent ) {
 	int			i, num;
 	int			touch[MAX_GENTITIES];
-	gentity_t	*hit;
+	EntPtr	hit;
 	trace_t		trace;
 	vec3_t		mins, maxs;
 	static vec3_t	range = { 40, 40, 52 };
@@ -314,7 +314,7 @@ void	G_TouchTriggers( gentity_t *ent ) {
 SpectatorThink
 =================
 */
-void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
+void SpectatorThink( EntPtr ent, usercmd_t *ucmd ) {
 	pmove_t	pm;
 	gclient_t	*client;
 
@@ -391,7 +391,7 @@ ClientTimerActions
 Actions that happen once a second
 ==================
 */
-void ClientTimerActions( gentity_t *ent, int msec ) {
+void ClientTimerActions( EntPtr ent, int msec ) {
 	gclient_t	*client;
 #ifdef MISSIONPACK
 	int			maxHealth;
@@ -525,7 +525,7 @@ Events will be passed on to the clients for presentation,
 but any server game effects are handled here
 ================
 */
-void ClientEvents( gentity_t *ent, int oldEventSequence ) {
+void ClientEvents( EntPtr ent, int oldEventSequence ) {
 	int		i, j;
 	int		event;
 	gclient_t *client;
@@ -533,7 +533,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	vec3_t	origin, angles;
 //	qboolean	fired;
 	gitem_t *item;
-	gentity_t *drop;
+	EntPtr drop;
 
 	client = ent->client;
 
@@ -657,9 +657,9 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 StuckInOtherClient
 ==============
 */
-static int StuckInOtherClient(gentity_t *ent) {
+static int StuckInOtherClient(EntPtr ent) {
 	int i;
-	gentity_t	*ent2;
+	EntPtr	ent2;
 
 	ent2 = &g_entities[0];
 	for ( i = 0; i < MAX_CLIENTS; i++, ent2++ ) {
@@ -702,7 +702,7 @@ SendPendingPredictableEvents
 ==============
 */
 void SendPendingPredictableEvents( playerState_t *ps ) {
-	gentity_t *t;
+	EntPtr t;
 	int event, seq;
 	int extEvent, number;
 
@@ -742,7 +742,7 @@ If "g_synchronousClients 1" is set, this will be called exactly
 once for each server frame, which makes for smooth demo recording.
 ==============
 */
-void ClientThink_real( gentity_t *ent ) {
+void ClientThink_real( EntPtr ent ) {
 	gclient_t	*client;
 	pmove_t		pm;
 	int			oldEventSequence;
@@ -1014,7 +1014,7 @@ A new command has arrived from the client
 ==================
 */
 void ClientThink( int clientNum ) {
-	gentity_t *ent;
+	EntPtr ent;
 
 	ent = g_entities + clientNum;
 	trap_GetUsercmd( clientNum, &ent->client->pers.cmd );
@@ -1029,7 +1029,7 @@ void ClientThink( int clientNum ) {
 }
 
 
-void G_RunClient( gentity_t *ent ) {
+void G_RunClient( EntPtr ent ) {
 	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer ) {
 		return;
 	}
@@ -1044,7 +1044,7 @@ SpectatorClientEndFrame
 
 ==================
 */
-void SpectatorClientEndFrame( gentity_t *ent ) {
+void SpectatorClientEndFrame( EntPtr ent ) {
 	gclient_t	*cl;
 
 	// if we are doing a chase cam or a remote view, grab the latest info
@@ -1093,7 +1093,7 @@ A fast client will have multiple ClientThink for each ClientEdFrame,
 while a slow client may have multiple ClientEndFrame between ClientThink.
 ==============
 */
-void ClientEndFrame( gentity_t *ent ) {
+void ClientEndFrame( EntPtr ent ) {
 	int			i;
 
 	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
