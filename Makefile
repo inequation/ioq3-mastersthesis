@@ -900,7 +900,10 @@ endif #SunOS
 
 ifndef CC
   CC=gcc
-  CXX=echo "lol: "
+endif
+
+ifndef CXX
+  CXX=g++
 endif
 
 ifndef BASEGAME_CXXFLAGS
@@ -916,7 +919,7 @@ ifndef SHLIBCXXFLAGS
 endif
 
 ifndef CXXFLAGS
-  CXXFLAGS=$(subst -Wimplicit,,$(subst -Wstrict-prototypes,,$(CFLAGS))) -Wno-write-strings -Wno-sign-compare
+  CXXFLAGS=-std=c++11 $(subst -Wimplicit,,$(subst -Wstrict-prototypes,,$(CFLAGS))) -Wno-write-strings -Wno-sign-compare
 endif
 
 ifndef RANLIB
@@ -2340,7 +2343,7 @@ Q3GOBJ_ = \
   $(B)/$(BASEGAME)/qcommon/q_math.o \
   $(B)/$(BASEGAME)/qcommon/q_shared.o
 
-Q3GOBJ = $(Q3GOBJ_) $(B)/$(BASEGAME)/game/g_syscalls.o
+Q3GOBJ = $(Q3GOBJ_) $(B)/$(BASEGAME)/game/g_syscalls.o $(B)/$(BASEGAME)/game/EntPtr.o
 Q3GVMOBJ = $(Q3GOBJ_:%.o=%.asm)
 
 $(B)/$(BASEGAME)/qagame$(SHLIBNAME): $(Q3GOBJ)
@@ -2391,7 +2394,7 @@ MPGOBJ_ = \
   $(B)/$(MISSIONPACK)/qcommon/q_math.o \
   $(B)/$(MISSIONPACK)/qcommon/q_shared.o
 
-MPGOBJ = $(MPGOBJ_) $(B)/$(MISSIONPACK)/game/g_syscalls.o
+MPGOBJ = $(MPGOBJ_) $(B)/$(MISSIONPACK)/game/g_syscalls.o $(B)/$(BASEGAME)/game/EntPtr.o
 MPGVMOBJ = $(MPGOBJ_:%.o=%.asm)
 
 $(B)/$(MISSIONPACK)/qagame$(SHLIBNAME): $(MPGOBJ)
