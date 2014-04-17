@@ -1192,6 +1192,8 @@ extern  vmCvar_t		cg_recordSPDemo;
 extern  vmCvar_t		cg_recordSPDemoName;
 extern	vmCvar_t		cg_obeliskRespawnDelay;
 #endif
+// lgodlewski: CPU load graph
+extern	vmCvar_t		cg_cpumeter;
 
 //
 // cg_main.c

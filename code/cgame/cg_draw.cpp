@@ -1729,6 +1729,183 @@ static void CG_DrawLagometer( void ) {
 	CG_DrawDisconnect();
 }
 
+/*
+===============================================================================
+
+CPUMETER
+
+===============================================================================
+*/
+
+#define CPU_SAMPLES		128
+#define MAX_CPU_CORES	16
+
+typedef struct {
+	unsigned long long	prevTotalTicks, prevIdleTicks;
+	float				usage[CPU_SAMPLES];
+} cpucore_t;
+
+typedef struct {
+	cpucore_t			core[MAX_CPU_CORES];
+	int					numCores;
+	int					sample;
+} cpumeter_t;
+
+cpumeter_t cpumeter;
+
+#if __unix__
+#include <unistd.h>
+static qboolean CG_ReadProcStat( FILE *fp, unsigned long long fields[10] ) {
+	int retval;
+	char buffer[1024];
+
+	if (!fgets(buffer, sizeof(buffer), fp))
+		return qfalse;
+
+	// line starts with c and a string. This is to handle cpu, cpu[0-9]+
+	retval = sscanf(buffer, "c%*s %Lu %Lu %Lu %Lu %Lu %Lu %Lu %Lu %Lu %Lu",
+					&fields[0],
+					&fields[1],
+					&fields[2],
+					&fields[3],
+					&fields[4],
+					&fields[5],
+					&fields[6],
+					&fields[7],
+					&fields[8],
+					&fields[9]);
+	return (qboolean)(retval >= 4);
+}
+#endif
+
+static void CG_SampleCPUUsage( void ) {
+#if _WIN32
+#else
+	static FILE *fp = NULL;
+	int i, j;
+	unsigned long long fields[10], totalTicks, idleTicks, deltaTotal, deltaIdle;
+
+	if (!fp) {
+		fp = fopen("/proc/stat", "r");
+		cpumeter.numCores = MIN(10, sysconf(_SC_NPROCESSORS_CONF));
+
+		// initialize state
+		for (i = 0; i < cpumeter.numCores; ++i) {
+			if (!CG_ReadProcStat(fp, fields)) {
+				cpumeter.core[i].prevTotalTicks = 1;
+				cpumeter.core[i].prevIdleTicks = 1;
+			} else {
+				cpumeter.core[i].prevTotalTicks = 0;
+				for (j = 0; j < sizeof(fields) / sizeof(fields[0]); ++j)
+					cpumeter.core[i].prevTotalTicks += fields[j];
+				cpumeter.core[i].prevIdleTicks = fields[3];
+			}
+		}
+	}
+
+	// rewind back to the beginning and flush the I/O cache
+	fseek(fp, 0, SEEK_SET);
+	fflush(fp);
+
+	for (i = 0; i < cpumeter.numCores; ++i) {
+		if (!CG_ReadProcStat(fp, fields)) {
+			cpumeter.core[i].prevTotalTicks = 1;
+			cpumeter.core[i].prevIdleTicks = 1;
+			cpumeter.core[i].usage[cpumeter.sample] = 0.f;
+		} else {
+			totalTicks = 0;
+			for (j = 0; j < sizeof(fields) / sizeof(fields[0]); ++j)
+				totalTicks += fields[j];
+			idleTicks = fields[3];
+
+			deltaTotal	= totalTicks	- cpumeter.core[i].prevTotalTicks;
+			deltaIdle	= idleTicks		- cpumeter.core[i].prevIdleTicks;
+			cpumeter.core[i].usage[cpumeter.sample] = (deltaTotal - deltaIdle) / (float)deltaTotal;
+			cpumeter.core[i].prevTotalTicks	= totalTicks;
+			cpumeter.core[i].prevIdleTicks	= idleTicks;
+		}
+	}
+	cpumeter.sample = (cpumeter.sample + 1) & (CPU_SAMPLES - 1);
+#endif
+}
+
+/*
+==============
+CG_DrawCPUMeter
+
+lgodlewski: draws per-core CPU load plots
+==============
+*/
+static void CG_DrawCPUMeter( void ) {
+	int		a, x, y, i, s;
+	float	v;
+	float	ax, ay, aw, ah, mid, range;
+	int		color;
+	float	vscale;
+
+	if ( !cg_cpumeter.integer )
+		return;
+
+	CG_SampleCPUUsage();
+
+	//
+	// draw the graph
+	//
+	for (i = 0; i < cpumeter.numCores; ++i)	{
+		x = 640 - 48 - i * 48;
+		y = 480 - 48;
+
+		trap_R_SetColor( NULL );
+		CG_DrawPic( x, y, 48, 48, cgs.media.lagometerShader );
+
+		ax = x;
+		ay = y;
+		aw = 48;
+		ah = 48;
+		CG_AdjustFrom640( &ax, &ay, &aw, &ah );
+
+		color = -1;
+		range = ah / 1;
+		mid = ay + range;
+
+		vscale = range / 1.f;
+
+		// draw the frame CPU usage
+		for ( a = 0 ; a < aw ; a++ ) {
+			s = (cpumeter.sample + 1 + a) & (CPU_SAMPLES - 1);
+			v = cpumeter.core[i].usage[s];
+			v *= vscale;
+			if ( v > 0 ) {
+				if ( color != 1 ) {
+					color = 1;
+					trap_R_SetColor( g_color_table[ColorIndex(COLOR_YELLOW)] );
+				}
+				if ( v > range ) {
+					v = range;
+				}
+				trap_R_DrawStretchPic ( ax + aw - a, mid - v, 1, v, 0, 0, 0, 0, cgs.media.whiteShader );
+			} else if ( v < 0 ) {
+				if ( color != 2 ) {
+					color = 2;
+					trap_R_SetColor( g_color_table[ColorIndex(COLOR_BLUE)] );
+				}
+				v = -v;
+				if ( v > range ) {
+					v = range;
+				}
+				trap_R_DrawStretchPic( ax + aw - a, mid, 1, v, 0, 0, 0, 0, cgs.media.whiteShader );
+			}
+		}
+
+		trap_R_SetColor( NULL );
+
+		/*if ( cg_nopredict.integer || cg_synchronousClients.integer ) {
+			CG_DrawBigString( x, y, "snc", 1.0 );
+		}*/
+
+	}
+}
+
 
 
 /*
@@ -2589,6 +2766,9 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 	CG_DrawTeamVote();
 
 	CG_DrawLagometer();
+
+	// lgodlewski: draw CPU consumption
+	CG_DrawCPUMeter();
 
 #ifdef MISSIONPACK
 	if (!cg_paused.integer) {
