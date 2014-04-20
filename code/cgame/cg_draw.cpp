@@ -1789,6 +1789,8 @@ static void CG_SampleCPUUsage( void ) {
 		fp = fopen("/proc/stat", "r");
 		cpumeter.numCores = MIN(10, sysconf(_SC_NPROCESSORS_CONF));
 
+		// discard total stats for all cores
+		CG_ReadProcStat(fp, fields);
 		// initialize state
 		for (i = 0; i < cpumeter.numCores; ++i) {
 			if (!CG_ReadProcStat(fp, fields)) {
@@ -1807,6 +1809,8 @@ static void CG_SampleCPUUsage( void ) {
 	fseek(fp, 0, SEEK_SET);
 	fflush(fp);
 
+	// discard total stats for all cores
+	CG_ReadProcStat(fp, fields);
 	for (i = 0; i < cpumeter.numCores; ++i) {
 		if (!CG_ReadProcStat(fp, fields)) {
 			cpumeter.core[i].prevTotalTicks = 1;
@@ -1841,7 +1845,8 @@ static void CG_DrawCPUMeter( void ) {
 	float	v;
 	float	ax, ay, aw, ah, mid, range;
 	int		color;
-	float	vscale;
+	float	vscale, average;
+	char	*str;
 
 	if ( !cg_cpumeter.integer )
 		return;
@@ -1868,36 +1873,36 @@ static void CG_DrawCPUMeter( void ) {
 		range = ah / 1;
 		mid = ay + range;
 
-		vscale = range / 1.f;
+		vscale = range;// / 1.f;
+		average = 0.f;
 
 		// draw the frame CPU usage
 		for ( a = 0 ; a < aw ; a++ ) {
 			s = (cpumeter.sample + 1 + a) & (CPU_SAMPLES - 1);
 			v = cpumeter.core[i].usage[s];
+			average += v;
 			v *= vscale;
-			if ( v > 0 ) {
-				if ( color != 1 ) {
-					color = 1;
-					trap_R_SetColor( g_color_table[ColorIndex(COLOR_YELLOW)] );
-				}
-				if ( v > range ) {
-					v = range;
-				}
-				trap_R_DrawStretchPic ( ax + aw - a, mid - v, 1, v, 0, 0, 0, 0, cgs.media.whiteShader );
-			} else if ( v < 0 ) {
-				if ( color != 2 ) {
-					color = 2;
-					trap_R_SetColor( g_color_table[ColorIndex(COLOR_BLUE)] );
-				}
-				v = -v;
-				if ( v > range ) {
-					v = range;
-				}
-				trap_R_DrawStretchPic( ax + aw - a, mid, 1, v, 0, 0, 0, 0, cgs.media.whiteShader );
+
+			if ( color != 1 ) {
+				color = 1;
+				trap_R_SetColor( g_color_table[ColorIndex(COLOR_YELLOW)] );
 			}
+			if ( v > range ) {
+				v = range;
+			}
+			trap_R_DrawStretchPic ( ax + aw - a, mid - v, 1, v, 0, 0, 0, 0, cgs.media.whiteShader );
 		}
 
 		trap_R_SetColor( NULL );
+
+		// draw average load for the last aw frames
+		str = va("^2%3.0f", average * 100.f / aw);
+		CG_DrawBigString( x, y, str, 1.0 );
+
+		// draw current load
+		s = cpumeter.sample & (CPU_SAMPLES - 1);
+		str = va("^1%3.0f", cpumeter.core[i].usage[s] * 100.f);
+		CG_DrawBigString( x, y + ah / 2, str, 1.0 );
 
 		/*if ( cg_nopredict.integer || cg_synchronousClients.integer ) {
 			CG_DrawBigString( x, y, "snc", 1.0 );
