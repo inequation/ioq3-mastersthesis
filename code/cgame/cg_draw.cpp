@@ -1746,7 +1746,7 @@ typedef struct {
 } cpucore_t;
 
 typedef struct {
-	cpucore_t			core[MAX_CPU_CORES];
+	cpucore_t			core[MAX_CPU_CORES + 1];	// core[0] is actually the total for all CPUs on the system
 	int					numCores;
 	int					sample;
 } cpumeter_t;
@@ -1780,17 +1780,17 @@ static qboolean CG_ReadProcStat( FILE *fp, unsigned long long fields[10] ) {
 
 static void CG_SampleCPUUsage( void ) {
 #if _WIN32
+	#error
 #else
 	static FILE *fp = NULL;
 	int i, j;
 	unsigned long long fields[10], totalTicks, idleTicks, deltaTotal, deltaIdle;
+	float usage;
 
 	if (!fp) {
 		fp = fopen("/proc/stat", "r");
-		cpumeter.numCores = MIN(10, sysconf(_SC_NPROCESSORS_CONF));
+		cpumeter.numCores = 1 + MIN(MAX_CPU_CORES, sysconf(_SC_NPROCESSORS_CONF));
 
-		// discard total stats for all cores
-		CG_ReadProcStat(fp, fields);
 		// initialize state
 		for (i = 0; i < cpumeter.numCores; ++i) {
 			if (!CG_ReadProcStat(fp, fields)) {
@@ -1809,8 +1809,6 @@ static void CG_SampleCPUUsage( void ) {
 	fseek(fp, 0, SEEK_SET);
 	fflush(fp);
 
-	// discard total stats for all cores
-	CG_ReadProcStat(fp, fields);
 	for (i = 0; i < cpumeter.numCores; ++i) {
 		if (!CG_ReadProcStat(fp, fields)) {
 			cpumeter.core[i].prevTotalTicks = 1;
@@ -1824,7 +1822,12 @@ static void CG_SampleCPUUsage( void ) {
 
 			deltaTotal	= totalTicks	- cpumeter.core[i].prevTotalTicks;
 			deltaIdle	= idleTicks		- cpumeter.core[i].prevIdleTicks;
-			cpumeter.core[i].usage[cpumeter.sample] = (deltaTotal - deltaIdle) / (float)deltaTotal;
+			usage		= (deltaTotal - deltaIdle) / (float)deltaTotal;
+
+			if (isnanf(usage))
+				usage = 0.f;
+
+			cpumeter.core[i].usage[cpumeter.sample] = usage;
 			cpumeter.core[i].prevTotalTicks	= totalTicks;
 			cpumeter.core[i].prevIdleTicks	= idleTicks;
 		}
@@ -1857,7 +1860,7 @@ static void CG_DrawCPUMeter( void ) {
 	// draw the graph
 	//
 	for (i = 0; i < cpumeter.numCores; ++i)	{
-		x = 640 - 48 - i * 48;
+		x = 640 - 48 - i * (48 + 1);
 		y = 480 - 48;
 
 		trap_R_SetColor( NULL );
@@ -1883,9 +1886,16 @@ static void CG_DrawCPUMeter( void ) {
 			average += v;
 			v *= vscale;
 
-			if ( color != 1 ) {
-				color = 1;
-				trap_R_SetColor( g_color_table[ColorIndex(COLOR_YELLOW)] );
+			if ( i == 0 ) {
+				if ( color != 2 ) {
+					color = 2;
+					trap_R_SetColor( g_color_table[ColorIndex(COLOR_WHITE)] );
+				}
+			} else {
+				if ( color != 1 ) {
+					color = 1;
+					trap_R_SetColor( g_color_table[ColorIndex(COLOR_YELLOW)] );
+				}
 			}
 			if ( v > range ) {
 				v = range;
@@ -1895,18 +1905,18 @@ static void CG_DrawCPUMeter( void ) {
 
 		trap_R_SetColor( NULL );
 
+		// draw core number
+		str = i == 0 ? (char *)"^3Total" : va("#%d", i);
+		CG_DrawSmallString( x, y, str, 1.0 );
+
 		// draw average load for the last aw frames
-		str = va("^2%3.0f", average * 100.f / aw);
-		CG_DrawBigString( x, y, str, 1.0 );
+		str = va("^2%3.0f%%", average * 100.f / aw);
+		CG_DrawSmallString( x, y + ah / 4, str, 1.0 );
 
 		// draw current load
 		s = cpumeter.sample & (CPU_SAMPLES - 1);
-		str = va("^1%3.0f", cpumeter.core[i].usage[s] * 100.f);
-		CG_DrawBigString( x, y + ah / 2, str, 1.0 );
-
-		/*if ( cg_nopredict.integer || cg_synchronousClients.integer ) {
-			CG_DrawBigString( x, y, "snc", 1.0 );
-		}*/
+		str = va("^1%3.0f%%", cpumeter.core[i].usage[s] * 100.f);
+		CG_DrawSmallString( x, y + ah / 2, str, 1.0 );
 
 	}
 }
