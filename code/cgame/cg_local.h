@@ -25,6 +25,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../game/bg_public.h"
 #include "cg_public.h"
 
+// lgodlewski: for game call time measurement
+#include "../game/g_public.h"
+
 
 // The entire cgame module is unloaded and reloaded on each level change,
 // so there is NO persistant data between levels on the client side.
@@ -1194,6 +1197,7 @@ extern	vmCvar_t		cg_obeliskRespawnDelay;
 #endif
 // lgodlewski: CPU load graph
 extern	vmCvar_t		cg_cpumeter;
+extern	vmCvar_t		g_timeSpent[BOTAI_START_FRAME + 1];
 
 //
 // cg_main.c

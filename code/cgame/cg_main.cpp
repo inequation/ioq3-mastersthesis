@@ -200,6 +200,7 @@ vmCvar_t	cg_obeliskRespawnDelay;
 
 // lgodlewski
 vmCvar_t	cg_cpumeter;
+vmCvar_t	g_timeSpent[BOTAI_START_FRAME + 1];
 
 typedef struct {
 	vmCvar_t	*vmCvar;
@@ -337,6 +338,7 @@ void CG_RegisterCvars( void ) {
 	int			i;
 	cvarTable_t	*cv;
 	char		var[MAX_TOKEN_CHARS];
+	char		*s;
 
 	for ( i = 0, cv = cvarTable ; i < cvarTableSize ; i++, cv++ ) {
 		trap_Cvar_Register( cv->vmCvar, cv->cvarName,
@@ -353,6 +355,12 @@ void CG_RegisterCvars( void ) {
 	trap_Cvar_Register(NULL, "headmodel", DEFAULT_MODEL, CVAR_USERINFO | CVAR_ARCHIVE );
 	trap_Cvar_Register(NULL, "team_model", DEFAULT_TEAM_MODEL, CVAR_USERINFO | CVAR_ARCHIVE );
 	trap_Cvar_Register(NULL, "team_headmodel", DEFAULT_TEAM_HEAD, CVAR_USERINFO | CVAR_ARCHIVE );
+
+	// lgodlewski
+	for (i = 0; i <= BOTAI_START_FRAME; ++i) {
+		s = va("g_timeSpent%d", i);
+		trap_Cvar_Register(&g_timeSpent[i], s, "0", 0);
+	}
 }
 
 /*																																			

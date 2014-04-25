@@ -188,6 +188,44 @@ void G_RunFrame( int levelTime );
 void G_ShutdownGame( int restart );
 void CheckExitRules( void );
 
+// lgodlewski: automatic time measurement for display on the HUD
+struct gameTimeMeasurement
+{
+	gameTimeMeasurement(int inCommand)
+		: command(inCommand)
+	{
+		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+	}
+
+	~gameTimeMeasurement() {
+		struct timespec end, delta;
+		char buf[64];
+		sprintf(buf, "g_timeSpent%d", command);
+
+		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+
+		delta = diff(start, end);
+
+		// store microseconds in the cvar
+		trap_Cvar_Set(buf, va("%d", (int)(delta.tv_nsec / 1000 + delta.tv_sec * 1000000)));
+	}
+
+	struct timespec diff(timespec start, timespec end)
+	{
+		struct timespec temp;
+		if ((end.tv_nsec - start.tv_nsec) < 0) {
+			temp.tv_sec = end.tv_sec - start.tv_sec - 1;
+			temp.tv_nsec = 1000000000 + end.tv_nsec - start.tv_nsec;
+		} else {
+			temp.tv_sec = end.tv_sec - start.tv_sec;
+			temp.tv_nsec = end.tv_nsec - start.tv_nsec;
+		}
+		return temp;
+	}
+
+	int command;
+	struct timespec start;
+};
 
 /*
 ================
@@ -198,6 +236,7 @@ This must be the very first function compiled into the .q3vm file
 ================
 */
 Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9, int arg10, int arg11  ) {
+	gameTimeMeasurement foo(command);	// lgodlewski
 	switch ( command ) {
 	case GAME_INIT:
 		G_InitGame( arg0, arg1, arg2 );

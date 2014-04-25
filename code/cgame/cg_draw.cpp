@@ -1746,9 +1746,14 @@ typedef struct {
 } cpucore_t;
 
 typedef struct {
+	int					time[CPU_SAMPLES];
+} commandTime_t;
+
+typedef struct {
 	cpucore_t			core[MAX_CPU_CORES + 1];	// core[0] is actually the total for all CPUs on the system
 	int					numCores;
 	int					sample;
+	commandTime_t		timeSpent[BOTAI_START_FRAME + 2];	// timeSpent[0] is actually the total for all commands
 } cpumeter_t;
 
 cpumeter_t cpumeter;
@@ -1779,6 +1784,7 @@ static qboolean CG_ReadProcStat( FILE *fp, unsigned long long fields[10] ) {
 #endif
 
 static void CG_SampleCPUUsage( void ) {
+	// sample CPU usage
 #if _WIN32
 	#error
 #else
@@ -1832,9 +1838,22 @@ static void CG_SampleCPUUsage( void ) {
 			cpumeter.core[i].prevIdleTicks	= idleTicks;
 		}
 	}
-	cpumeter.sample = (cpumeter.sample + 1) & (CPU_SAMPLES - 1);
 #endif
+
+	// sample frame times spent in game commands
+	int total = 0;
+	for (i = 0; i <= BOTAI_START_FRAME; ++i)
+	{
+		trap_Cvar_Update(&g_timeSpent[i]);
+		cpumeter.timeSpent[i + 1].time[cpumeter.sample] = g_timeSpent[i].integer;
+		trap_Cvar_Set(va("g_timeSpent%d", i), "0");
+		total += g_timeSpent[i].integer;
+	}
+	cpumeter.timeSpent[0].time[cpumeter.sample] = total;
+
+	cpumeter.sample = (cpumeter.sample + 1) & (CPU_SAMPLES - 1);
 }
+
 
 /*
 ==============
@@ -1847,8 +1866,8 @@ static void CG_DrawCPUMeter( void ) {
 	int		a, x, y, i, s;
 	float	v;
 	float	ax, ay, aw, ah, mid, range;
-	int		color;
-	float	vscale, average;
+	int		color, iaverage;
+	float	vscale, faverage;
 	char	*str;
 
 	if ( !cg_cpumeter.integer )
@@ -1859,65 +1878,133 @@ static void CG_DrawCPUMeter( void ) {
 	//
 	// draw the graph
 	//
-	for (i = 0; i < cpumeter.numCores; ++i)	{
-		x = 640 - 48 - i * (48 + 1);
-		y = 480 - 48;
+	y = 480 - 48;
+	if (cg_cpumeter.integer & 1)
+	{
+		for (i = 0; i < cpumeter.numCores; ++i)	{
+			x = 640 - 48 - i * (48 + 1);
 
-		trap_R_SetColor( NULL );
-		CG_DrawPic( x, y, 48, 48, cgs.media.lagometerShader );
+			trap_R_SetColor( NULL );
+			CG_DrawPic( x, y, 48, 48, cgs.media.lagometerShader );
 
-		ax = x;
-		ay = y;
-		aw = 48;
-		ah = 48;
-		CG_AdjustFrom640( &ax, &ay, &aw, &ah );
+			ax = x;
+			ay = y;
+			aw = 48;
+			ah = 48;
+			CG_AdjustFrom640( &ax, &ay, &aw, &ah );
 
-		color = -1;
-		range = ah / 1;
-		mid = ay + range;
+			color = -1;
+			range = ah / 1;
+			mid = ay + range;
 
-		vscale = range;// / 1.f;
-		average = 0.f;
+			vscale = range;// / 1.f;
+			faverage = 0.f;
 
-		// draw the frame CPU usage
-		for ( a = 0 ; a < aw ; a++ ) {
-			s = (cpumeter.sample + 1 + a) & (CPU_SAMPLES - 1);
-			v = cpumeter.core[i].usage[s];
-			average += v;
-			v *= vscale;
+			// draw the frame CPU usage
+			for ( a = 0 ; a < aw ; a++ ) {
+				s = (cpumeter.sample + 1 + a) & (CPU_SAMPLES - 1);
+				v = cpumeter.core[i].usage[s];
+				faverage += v;
+				v *= vscale;
 
-			if ( i == 0 ) {
-				if ( color != 2 ) {
-					color = 2;
-					trap_R_SetColor( g_color_table[ColorIndex(COLOR_WHITE)] );
+				if ( i == 0 ) {
+					if ( color != 2 ) {
+						color = 2;
+						trap_R_SetColor( g_color_table[ColorIndex(COLOR_WHITE)] );
+					}
+				} else {
+					if ( color != 1 ) {
+						color = 1;
+						trap_R_SetColor( g_color_table[ColorIndex(COLOR_YELLOW)] );
+					}
 				}
-			} else {
-				if ( color != 1 ) {
-					color = 1;
-					trap_R_SetColor( g_color_table[ColorIndex(COLOR_YELLOW)] );
+				if ( v > range ) {
+					v = range;
 				}
+				trap_R_DrawStretchPic ( ax + aw - a, mid - v, 1, v, 0, 0, 0, 0, cgs.media.whiteShader );
 			}
-			if ( v > range ) {
-				v = range;
-			}
-			trap_R_DrawStretchPic ( ax + aw - a, mid - v, 1, v, 0, 0, 0, 0, cgs.media.whiteShader );
+
+			trap_R_SetColor( NULL );
+
+			// draw core number
+			str = i == 0 ? (char *)"^3Load" : va("#%d", i);
+			CG_DrawSmallString( x, y, str, 1.0 );
+
+			// draw average load for the last aw frames
+			str = va("^2%3.0f%%", faverage * 100.f / aw);
+			CG_DrawSmallString( x, y + ah / 4, str, 1.0 );
+
+			// draw current load
+			s = cpumeter.sample & (CPU_SAMPLES - 1);
+			str = va("^1%3.0f%%", cpumeter.core[i].usage[s] * 100.f);
+			CG_DrawSmallString( x, y + ah / 2, str, 1.0 );
 		}
+		y -= 48 + 1;
+	}
+	if (cg_cpumeter.integer & 2)
+	{
+		for (i = 0; i <= sizeof(cpumeter.timeSpent) / sizeof(cpumeter.timeSpent[0])
+			 && (i == 0 || cg_cpumeter.integer & 4); ++i)
+		{
+			x = 640 - 48 - i * (48 + 1);
 
-		trap_R_SetColor( NULL );
+			trap_R_SetColor( NULL );
+			CG_DrawPic( x, y, 48, 48, cgs.media.lagometerShader );
 
-		// draw core number
-		str = i == 0 ? (char *)"^3Total" : va("#%d", i);
-		CG_DrawSmallString( x, y, str, 1.0 );
+			ax = x;
+			ay = y;
+			aw = 48;
+			ah = 48;
+			CG_AdjustFrom640( &ax, &ay, &aw, &ah );
 
-		// draw average load for the last aw frames
-		str = va("^2%3.0f%%", average * 100.f / aw);
-		CG_DrawSmallString( x, y + ah / 4, str, 1.0 );
+			color = -1;
+			range = ah / 1;
+			mid = ay + range;
 
-		// draw current load
-		s = cpumeter.sample & (CPU_SAMPLES - 1);
-		str = va("^1%3.0f%%", cpumeter.core[i].usage[s] * 100.f);
-		CG_DrawSmallString( x, y + ah / 2, str, 1.0 );
+			vscale = range / (100000.f / 6.f);	// 16666.(6) us (60 fps)
+			iaverage = 0;
 
+			// draw the frame time
+			for ( a = 0 ; a < aw ; a++ ) {
+				s = (cpumeter.sample + 1 + a) & (CPU_SAMPLES - 1);
+				v = cpumeter.timeSpent[i].time[s];
+				// pre-divide to avoid integer overflows
+				iaverage += cpumeter.timeSpent[i].time[s] / (int)aw;
+				v *= vscale;
+
+				if ( i == 0 ) {
+					if ( color != 2 ) {
+						color = 2;
+						trap_R_SetColor( g_color_table[ColorIndex(COLOR_WHITE)] );
+					}
+				} else {
+					if ( color != 1 ) {
+						color = 1;
+						trap_R_SetColor( g_color_table[ColorIndex(COLOR_YELLOW)] );
+					}
+				}
+				if ( v > range ) {
+					v = range;
+				}
+				trap_R_DrawStretchPic ( ax + aw - a, mid - v, 1, v, 0, 0, 0, 0, cgs.media.whiteShader );
+			}
+
+			trap_R_SetColor( NULL );
+
+			// draw command number
+			str = i == 0 ? (char *)"^3Time" : va("#%d", i);
+			CG_DrawSmallString( x, y, str, 1.0 );
+
+			// draw average time for the last aw frames
+			str = va("^2%4dus", iaverage);
+			CG_DrawSmallString( x, y + ah / 4, str, 1.0 );
+
+			// draw last frame time
+			s = cpumeter.sample & (CPU_SAMPLES - 1);
+			str = va("^1%4dus", cpumeter.timeSpent[i].time[s]);
+			CG_DrawSmallString( x, y + ah / 2, str, 1.0 );
+		}
+		y -= 48 + 1;
 	}
 }
 
