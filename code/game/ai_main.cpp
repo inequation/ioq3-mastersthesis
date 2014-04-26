@@ -55,6 +55,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "inv.h"
 #include "syn.h"
 
+// lgodlewski
+#include <tbb/tbb.h>
+
 #ifndef MAX_PATH
 #define MAX_PATH		144
 #endif
@@ -1392,9 +1395,6 @@ BotAIStartFrame
 ==================
 */
 int BotAIStartFrame(int time) {
-	int i;
-	EntPtr	ent;
-	bot_entitystate_t state;
 	int elapsed_time, thinktime;
 	static int local_time;
 	static int botlib_residual;
@@ -1421,20 +1421,23 @@ int BotAIStartFrame(int time) {
 
 	if (bot_pause.integer) {
 		// execute bot user commands every frame
-		for( i = 0; i < MAX_CLIENTS; i++ ) {
-			if( !botstates[i] || !botstates[i]->inuse ) {
-				continue;
-			}
-			if( g_entities[i].client->pers.connected != CON_CONNECTED ) {
-				continue;
-			}
-			botstates[i]->lastucmd.forwardmove = 0;
-			botstates[i]->lastucmd.rightmove = 0;
-			botstates[i]->lastucmd.upmove = 0;
-			botstates[i]->lastucmd.buttons = 0;
-			botstates[i]->lastucmd.serverTime = time;
-			trap_BotUserCommand(botstates[i]->client, &botstates[i]->lastucmd);
-		}
+		tbb::parallel_for(tbb::blocked_range<int>(0, MAX_CLIENTS),
+			[=](const tbb::blocked_range<int>& r) {
+				for( int i = r.begin(); i != r.end(); i++ ) {
+					if( !botstates[i] || !botstates[i]->inuse ) {
+						continue;
+					}
+					if( g_entities[i].client->pers.connected != CON_CONNECTED ) {
+						continue;
+					}
+					botstates[i]->lastucmd.forwardmove = 0;
+					botstates[i]->lastucmd.rightmove = 0;
+					botstates[i]->lastucmd.upmove = 0;
+					botstates[i]->lastucmd.buttons = 0;
+					botstates[i]->lastucmd.serverTime = time;
+					trap_BotUserCommand(botstates[i]->client, &botstates[i]->lastucmd);
+				}
+			});
 		return qtrue;
 	}
 
@@ -1475,68 +1478,73 @@ int BotAIStartFrame(int time) {
 		if (!trap_AAS_Initialized()) return qfalse;
 
 		//update entities in the botlib
-		for (i = 0; i < MAX_GENTITIES; i++) {
-			ent = &g_entities[i];
-			if (!ent->inuse) {
-				trap_BotLibUpdateEntity(i, NULL);
-				continue;
-			}
-			if (!ent->r.linked) {
-				trap_BotLibUpdateEntity(i, NULL);
-				continue;
-			}
-			if (ent->r.svFlags & SVF_NOCLIENT) {
-				trap_BotLibUpdateEntity(i, NULL);
-				continue;
-			}
-			// do not update missiles
-			if (ent->s.eType == ET_MISSILE && ent->s.weapon != WP_GRAPPLING_HOOK) {
-				trap_BotLibUpdateEntity(i, NULL);
-				continue;
-			}
-			// do not update event only entities
-			if (ent->s.eType > ET_EVENTS) {
-				trap_BotLibUpdateEntity(i, NULL);
-				continue;
-			}
-#ifdef MISSIONPACK
-			// never link prox mine triggers
-			if (ent->r.contents == CONTENTS_TRIGGER) {
-				if (ent->touch == ProximityMine_Trigger) {
-					trap_BotLibUpdateEntity(i, NULL);
-					continue;
+		tbb::parallel_for(tbb::blocked_range<int>(0, MAX_GENTITIES),
+			[=](const tbb::blocked_range<int>& r) {
+				EntPtr ent;
+				bot_entitystate_t state;
+				for (int i = r.begin(); i != r.end(); i++) {
+					ent = &g_entities[i];
+					if (!ent->inuse) {
+						trap_BotLibUpdateEntity(i, NULL);
+						continue;
+					}
+					if (!ent->r.linked) {
+						trap_BotLibUpdateEntity(i, NULL);
+						continue;
+					}
+					if (ent->r.svFlags & SVF_NOCLIENT) {
+						trap_BotLibUpdateEntity(i, NULL);
+						continue;
+					}
+					// do not update missiles
+					if (ent->s.eType == ET_MISSILE && ent->s.weapon != WP_GRAPPLING_HOOK) {
+						trap_BotLibUpdateEntity(i, NULL);
+						continue;
+					}
+					// do not update event only entities
+					if (ent->s.eType > ET_EVENTS) {
+						trap_BotLibUpdateEntity(i, NULL);
+						continue;
+					}
+		#ifdef MISSIONPACK
+					// never link prox mine triggers
+					if (ent->r.contents == CONTENTS_TRIGGER) {
+						if (ent->touch == ProximityMine_Trigger) {
+							trap_BotLibUpdateEntity(i, NULL);
+							continue;
+						}
+					}
+		#endif
+					//
+					memset(&state, 0, sizeof(bot_entitystate_t));
+					//
+					VectorCopy(ent->r.currentOrigin, state.origin);
+					if (i < MAX_CLIENTS) {
+						VectorCopy(ent->s.apos.trBase, state.angles);
+					} else {
+						VectorCopy(ent->r.currentAngles, state.angles);
+					}
+					VectorCopy(ent->s.origin2, state.old_origin);
+					VectorCopy(ent->r.mins, state.mins);
+					VectorCopy(ent->r.maxs, state.maxs);
+					state.type = ent->s.eType;
+					state.flags = ent->s.eFlags;
+					if (ent->r.bmodel) state.solid = SOLID_BSP;
+					else state.solid = SOLID_BBOX;
+					state.groundent = ent->s.groundEntityNum;
+					state.modelindex = ent->s.modelindex;
+					state.modelindex2 = ent->s.modelindex2;
+					state.frame = ent->s.frame;
+					state.event = ent->s.event;
+					state.eventParm = ent->s.eventParm;
+					state.powerups = ent->s.powerups;
+					state.legsAnim = ent->s.legsAnim;
+					state.torsoAnim = ent->s.torsoAnim;
+					state.weapon = ent->s.weapon;
+					//
+					trap_BotLibUpdateEntity(i, &state);
 				}
-			}
-#endif
-			//
-			memset(&state, 0, sizeof(bot_entitystate_t));
-			//
-			VectorCopy(ent->r.currentOrigin, state.origin);
-			if (i < MAX_CLIENTS) {
-				VectorCopy(ent->s.apos.trBase, state.angles);
-			} else {
-				VectorCopy(ent->r.currentAngles, state.angles);
-			}
-			VectorCopy(ent->s.origin2, state.old_origin);
-			VectorCopy(ent->r.mins, state.mins);
-			VectorCopy(ent->r.maxs, state.maxs);
-			state.type = ent->s.eType;
-			state.flags = ent->s.eFlags;
-			if (ent->r.bmodel) state.solid = SOLID_BSP;
-			else state.solid = SOLID_BBOX;
-			state.groundent = ent->s.groundEntityNum;
-			state.modelindex = ent->s.modelindex;
-			state.modelindex2 = ent->s.modelindex2;
-			state.frame = ent->s.frame;
-			state.event = ent->s.event;
-			state.eventParm = ent->s.eventParm;
-			state.powerups = ent->s.powerups;
-			state.legsAnim = ent->s.legsAnim;
-			state.torsoAnim = ent->s.torsoAnim;
-			state.weapon = ent->s.weapon;
-			//
-			trap_BotLibUpdateEntity(i, &state);
-		}
+			});
 
 		BotAIRegularUpdate();
 	}
@@ -1544,37 +1552,47 @@ int BotAIStartFrame(int time) {
 	floattime = trap_AAS_Time();
 
 	// execute scheduled bot AI
-	for( i = 0; i < MAX_CLIENTS; i++ ) {
-		if( !botstates[i] || !botstates[i]->inuse ) {
-			continue;
-		}
-		//
-		botstates[i]->botthink_residual += elapsed_time;
-		//
-		if ( botstates[i]->botthink_residual >= thinktime ) {
-			botstates[i]->botthink_residual -= thinktime;
+	qboolean retval = qtrue;
+	tbb::parallel_for(tbb::blocked_range<int>(0, MAX_CLIENTS),
+		[=, &retval](const tbb::blocked_range<int>& r) {
+			for( int i = r.begin(); i != r.end(); i++ ) {
+				if( !botstates[i] || !botstates[i]->inuse ) {
+					continue;
+				}
+				//
+				botstates[i]->botthink_residual += elapsed_time;
+				//
+				if ( botstates[i]->botthink_residual >= thinktime ) {
+					botstates[i]->botthink_residual -= thinktime;
 
-			if (!trap_AAS_Initialized()) return qfalse;
+					if (!trap_AAS_Initialized()) {
+						retval = qfalse;
+						break;
+					}
 
-			if (g_entities[i].client->pers.connected == CON_CONNECTED) {
-				BotAI(i, (float) thinktime / 1000);
+					if (g_entities[i].client->pers.connected == CON_CONNECTED) {
+						BotAI(i, (float) thinktime / 1000);
+					}
+				}
 			}
-		}
-	}
+		});
 
 
 	// execute bot user commands every frame
-	for( i = 0; i < MAX_CLIENTS; i++ ) {
-		if( !botstates[i] || !botstates[i]->inuse ) {
-			continue;
-		}
-		if( g_entities[i].client->pers.connected != CON_CONNECTED ) {
-			continue;
-		}
+	tbb::parallel_for(tbb::blocked_range<int>(0, MAX_CLIENTS),
+		[=](const tbb::blocked_range<int>& r) {
+			for( int i = r.begin(); i != r.end(); i++ ) {
+				if( !botstates[i] || !botstates[i]->inuse ) {
+					continue;
+				}
+				if( g_entities[i].client->pers.connected != CON_CONNECTED ) {
+					continue;
+				}
 
-		BotUpdateInput(botstates[i], time, elapsed_time);
-		trap_BotUserCommand(botstates[i]->client, &botstates[i]->lastucmd);
-	}
+				BotUpdateInput(botstates[i], time, elapsed_time);
+				trap_BotUserCommand(botstates[i]->client, &botstates[i]->lastucmd);
+			}
+		});
 
 	return qtrue;
 }

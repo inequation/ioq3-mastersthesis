@@ -23,6 +23,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
+// lgodlewski
+#include <tbb/tbb.h>
+#include <tbb/task_group.h>
+
 level_locals_t	level;
 
 typedef struct {
@@ -227,6 +231,9 @@ struct gameTimeMeasurement
 	struct timespec start;
 };
 
+// lgodlewski: ClientThink() task group
+tbb::task_group g_clientThinkTasks;
+
 /*
 ================
 vmMain
@@ -236,7 +243,9 @@ This must be the very first function compiled into the .q3vm file
 ================
 */
 Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9, int arg10, int arg11  ) {
-	gameTimeMeasurement foo(command);	// lgodlewski
+	// lgodlewski
+	gameTimeMeasurement foo(command);
+
 	switch ( command ) {
 	case GAME_INIT:
 		G_InitGame( arg0, arg1, arg2 );
@@ -247,7 +256,8 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 	case GAME_CLIENT_CONNECT:
 		return (intptr_t)ClientConnect( arg0, (qboolean)arg1, (qboolean)arg2 );
 	case GAME_CLIENT_THINK:
-		ClientThink( arg0 );
+		// lgodlewski: schedule client updates an async background tasks
+		g_clientThinkTasks.run([arg0]{ClientThink( arg0 );});
 		return 0;
 	case GAME_CLIENT_USERINFO_CHANGED:
 		ClientUserinfoChanged( arg0 );
@@ -262,6 +272,8 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 		ClientCommand( arg0 );
 		return 0;
 	case GAME_RUN_FRAME:
+		// lgodlewski: synchronize clients before getting here
+		g_clientThinkTasks.wait();
 		G_RunFrame( arg0 );
 		return 0;
 	case GAME_CONSOLE_COMMAND:
@@ -1793,8 +1805,6 @@ Advances the non-player objects in the world
 ================
 */
 void G_RunFrame( int levelTime ) {
-	int			i;
-	EntPtr	ent;
 
 	// if we are waiting for the level to restart, do nothing
 	if ( level.restarted ) {
@@ -1811,73 +1821,79 @@ void G_RunFrame( int levelTime ) {
 	//
 	// go through all allocated objects
 	//
-	ent = &g_entities[0];
-	for (i=0 ; i<level.num_entities ; i++, ent++) {
-		if ( !ent->inuse ) {
-			continue;
-		}
-
-		// clear events that are too old
-		if ( level.time - ent->eventTime > EVENT_VALID_MSEC ) {
-			if ( ent->s.event ) {
-				ent->s.event = 0;	// &= EV_EVENT_BITS;
-				if ( ent->client ) {
-					ent->client->ps.externalEvent = 0;
-					// predicted events should never be set to zero
-					//ent->client->ps.events[0] = 0;
-					//ent->client->ps.events[1] = 0;
+	tbb::parallel_for(tbb::blocked_range<int>(0, level.num_entities),
+		[=](const tbb::blocked_range<int>& r) {
+			EntPtr ent = &g_entities[r.begin()];
+			for (int i=r.begin() ; i!=r.end() ; i++, ent++) {
+				if ( !ent->inuse ) {
+					continue;
 				}
+
+				// clear events that are too old
+				if ( level.time - ent->eventTime > EVENT_VALID_MSEC ) {
+					if ( ent->s.event ) {
+						ent->s.event = 0;	// &= EV_EVENT_BITS;
+						if ( ent->client ) {
+							ent->client->ps.externalEvent = 0;
+							// predicted events should never be set to zero
+							//ent->client->ps.events[0] = 0;
+							//ent->client->ps.events[1] = 0;
+						}
+					}
+					if ( ent->freeAfterEvent ) {
+						// tempEntities or dropped items completely go away after their event
+						G_FreeEntity( ent );
+						continue;
+					} else if ( ent->unlinkAfterEvent ) {
+						// items that will respawn will hide themselves after their pickup event
+						ent->unlinkAfterEvent = qfalse;
+						trap_UnlinkEntity( ent );
+					}
+				}
+
+				// temporary entities don't think
+				if ( ent->freeAfterEvent ) {
+					continue;
+				}
+
+				if ( !ent->r.linked && ent->neverFree ) {
+					continue;
+				}
+
+				if ( ent->s.eType == ET_MISSILE ) {
+					G_RunMissile( ent );
+					continue;
+				}
+
+				if ( ent->s.eType == ET_ITEM || ent->physicsObject ) {
+					G_RunItem( ent );
+					continue;
+				}
+
+				if ( ent->s.eType == ET_MOVER ) {
+					G_RunMover( ent );
+					continue;
+				}
+
+				if ( i < MAX_CLIENTS ) {
+					G_RunClient( ent );
+					continue;
+				}
+
+				G_RunThink( ent );
 			}
-			if ( ent->freeAfterEvent ) {
-				// tempEntities or dropped items completely go away after their event
-				G_FreeEntity( ent );
-				continue;
-			} else if ( ent->unlinkAfterEvent ) {
-				// items that will respawn will hide themselves after their pickup event
-				ent->unlinkAfterEvent = qfalse;
-				trap_UnlinkEntity( ent );
-			}
-		}
-
-		// temporary entities don't think
-		if ( ent->freeAfterEvent ) {
-			continue;
-		}
-
-		if ( !ent->r.linked && ent->neverFree ) {
-			continue;
-		}
-
-		if ( ent->s.eType == ET_MISSILE ) {
-			G_RunMissile( ent );
-			continue;
-		}
-
-		if ( ent->s.eType == ET_ITEM || ent->physicsObject ) {
-			G_RunItem( ent );
-			continue;
-		}
-
-		if ( ent->s.eType == ET_MOVER ) {
-			G_RunMover( ent );
-			continue;
-		}
-
-		if ( i < MAX_CLIENTS ) {
-			G_RunClient( ent );
-			continue;
-		}
-
-		G_RunThink( ent );
-	}
+		});
 
 	// perform final fixups on the players
-	ent = &g_entities[0];
-	for (i=0 ; i < level.maxclients ; i++, ent++ ) {
-		if ( ent->inuse ) {
-			ClientEndFrame( ent );
-		}
-	}
+	tbb::parallel_for(tbb::blocked_range<int>(0, level.maxclients),
+		[=](const tbb::blocked_range<int>& r) {
+			EntPtr ent = &g_entities[r.begin()];
+			for (int i=r.begin() ; i != r.end() ; i++, ent++ ) {
+				if ( ent->inuse ) {
+					ClientEndFrame( ent );
+				}
+			}
+		});
 
 	// see if it is time to do a tournement restart
 	CheckTournament();
@@ -1899,7 +1915,7 @@ void G_RunFrame( int levelTime ) {
 	CheckCvars();
 
 	if (g_listEntity.integer) {
-		for (i = 0; i < MAX_GENTITIES; i++) {
+		for (int i = 0; i < MAX_GENTITIES; i++) {
 			G_Printf("%4i: %s\n", i, g_entities[i].classname);
 		}
 		trap_Cvar_Set("g_listEntity", "0");
