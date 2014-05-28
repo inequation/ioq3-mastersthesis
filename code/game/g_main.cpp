@@ -231,8 +231,10 @@ struct gameTimeMeasurement
 	struct timespec start;
 };
 
+// lgodlewski: for setting the number of TBB workers
+tbb::task_scheduler_init *g_taskSchedulerInit = nullptr;
 // lgodlewski: ClientThink() task group
-tbb::task_group g_clientThinkTasks;
+tbb::task_group *g_clientThinkTasks = nullptr;
 
 /*
 ================
@@ -248,16 +250,29 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 
 	switch ( command ) {
 	case GAME_INIT:
+		// lgodlewski: initialize the threading infrastructure
+		if (!g_taskSchedulerInit)
+			g_taskSchedulerInit = new tbb::task_scheduler_init(1);
+		if (!g_clientThinkTasks)
+			g_clientThinkTasks = new tbb::task_group();
+
 		G_InitGame( arg0, arg1, arg2 );
 		return 0;
 	case GAME_SHUTDOWN:
 		G_ShutdownGame( arg0 );
+		// lgodlewski: clean up the threading infrastructure
+		if (g_clientThinkTasks) {
+			g_clientThinkTasks->wait();
+			delete g_clientThinkTasks;
+			g_clientThinkTasks = nullptr;
+		}
+
 		return 0;
 	case GAME_CLIENT_CONNECT:
 		return (intptr_t)ClientConnect( arg0, (qboolean)arg1, (qboolean)arg2 );
 	case GAME_CLIENT_THINK:
 		// lgodlewski: schedule client updates an async background tasks
-		g_clientThinkTasks.run([arg0]{ClientThink( arg0 );});
+		g_clientThinkTasks->run([arg0]{ClientThink( arg0 );});
 		return 0;
 	case GAME_CLIENT_USERINFO_CHANGED:
 		ClientUserinfoChanged( arg0 );
@@ -272,8 +287,9 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 		ClientCommand( arg0 );
 		return 0;
 	case GAME_RUN_FRAME:
-		// lgodlewski: synchronize clients before getting here
-		g_clientThinkTasks.wait();
+		// lgodlewski: synchronize clients before updating entities
+		g_clientThinkTasks->wait();
+
 		G_RunFrame( arg0 );
 		return 0;
 	case GAME_CONSOLE_COMMAND:
