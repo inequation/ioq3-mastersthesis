@@ -27,6 +27,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "bg_public.h"
 #include "bg_local.h"
 
+// lgodlewski
+#ifdef __cplusplus
+	#include <tbb/tbb.h>
+#endif
+
 pmove_t		*pm;
 pml_t		pml;
 
@@ -2023,6 +2028,12 @@ Can be called by either the server or the client
 ================
 */
 void Pmove (pmove_t *pmove) {
+	// lgodlewski: all pmove code is **thread-unsafe** because it uses globals
+	#ifdef __cplusplus
+	static tbb::mutex pmoveMutex;
+	tbb::mutex::scoped_lock lock(pmoveMutex);
+	#endif
+
 	int			finalTime;
 
 	finalTime = pmove->cmd.serverTime;

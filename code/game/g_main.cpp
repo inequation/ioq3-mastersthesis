@@ -287,10 +287,14 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 		ClientCommand( arg0 );
 		return 0;
 	case GAME_RUN_FRAME:
-		// lgodlewski: synchronize clients before updating entities
+		// lgodlewski: synchronize clients *before* updating entities...
 		g_clientThinkTasks->wait();
 
 		G_RunFrame( arg0 );
+
+		// lgodlewski: ...and *after* as well, as it may spawn more
+		// ClientThink() tasks
+		g_clientThinkTasks->wait();
 		return 0;
 	case GAME_CONSOLE_COMMAND:
 		return ConsoleCommand();
