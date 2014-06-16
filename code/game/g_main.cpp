@@ -251,8 +251,8 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 	switch ( command ) {
 	case GAME_INIT:
 		// lgodlewski: initialize the threading infrastructure
-		if (!g_taskSchedulerInit)
-			g_taskSchedulerInit = new tbb::task_scheduler_init(1);
+		/*if (!g_taskSchedulerInit)
+			g_taskSchedulerInit = new tbb::task_scheduler_init(1);*/
 		if (!g_clientThinkTasks)
 			g_clientThinkTasks = new tbb::task_group();
 
@@ -287,19 +287,20 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 		ClientCommand( arg0 );
 		return 0;
 	case GAME_RUN_FRAME:
-		// lgodlewski: synchronize clients *before* updating entities...
+		// lgodlewski: synchronize clients *before* updating entities
 		g_clientThinkTasks->wait();
 
 		G_RunFrame( arg0 );
-
-		// lgodlewski: ...and *after* as well, as it may spawn more
-		// ClientThink() tasks
-		g_clientThinkTasks->wait();
 		return 0;
 	case GAME_CONSOLE_COMMAND:
 		return ConsoleCommand();
 	case BOTAI_START_FRAME:
-		return BotAIStartFrame( arg0 );
+		{
+			// lgodlewski: synchronize clients after updating bots
+			int retval = BotAIStartFrame( arg0 );
+			g_clientThinkTasks->wait();
+			return retval;
+		}
 	}
 
 	return -1;
