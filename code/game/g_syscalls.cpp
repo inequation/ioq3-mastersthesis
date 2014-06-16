@@ -46,7 +46,10 @@ int PASSFLOAT( float x ) {
 }
 
 void	trap_Print( const char *text ) {
-	tbb::recursive_mutex::scoped_lock lock(g_syscallMutex);	// lgodlewski
+	// lgodlewski: prints happen too often and are too trivial to contend for
+	// the global mutex
+	static tbb::mutex printMutex;
+	tbb::mutex::scoped_lock lock(printMutex);	// lgodlewski
 	g_syscall( G_PRINT, text );
 }
 
