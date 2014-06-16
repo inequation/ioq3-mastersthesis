@@ -1737,8 +1737,9 @@ CPUMETER
 ===============================================================================
 */
 
-#define CPU_SAMPLES		128
-#define MAX_CPU_CORES	16
+#define CPU_SAMPLES			128
+#define MAX_CPU_CORES		16
+#define CPU_SAMPLING_PERIOD	100	// ms
 
 typedef struct {
 	unsigned long long	prevTotalTicks, prevIdleTicks;
@@ -1792,6 +1793,26 @@ static void CG_SampleCPUUsage( void ) {
 	int i, j;
 	unsigned long long fields[10], totalTicks, idleTicks, deltaTotal, deltaIdle;
 	float usage;
+	static	int	previous;
+	int		t, frameTime;
+
+	// sample frame times spent in game commands
+	int total = 0;
+	for (i = 0; i <= BOTAI_START_FRAME; ++i) {
+		trap_Cvar_Update(&g_timeSpent[i]);
+		cpumeter.timeSpent[i + 1].time[cpumeter.sample] += g_timeSpent[i].integer;
+		trap_Cvar_Set(va("g_timeSpent%d", i), "0");
+		total += g_timeSpent[i].integer;
+	}
+	cpumeter.timeSpent[0].time[cpumeter.sample] += total;
+
+	// don't use serverTime, because that will be drifting to
+	// correct for internet lag changes, timescales, timedemos, etc
+	t = trap_Milliseconds();
+	frameTime = t - previous;
+	if (frameTime < CPU_SAMPLING_PERIOD)
+		return;
+	previous = t;
 
 	if (!fp) {
 		fp = fopen("/proc/stat", "r");
@@ -1840,20 +1861,12 @@ static void CG_SampleCPUUsage( void ) {
 	}
 #endif
 
-	// sample frame times spent in game commands
-	int total = 0;
-	for (i = 0; i <= BOTAI_START_FRAME; ++i)
-	{
-		trap_Cvar_Update(&g_timeSpent[i]);
-		cpumeter.timeSpent[i + 1].time[cpumeter.sample] = g_timeSpent[i].integer;
-		trap_Cvar_Set(va("g_timeSpent%d", i), "0");
-		total += g_timeSpent[i].integer;
-	}
-	cpumeter.timeSpent[0].time[cpumeter.sample] = total;
-
+	// reset times spent in game commands
 	cpumeter.sample = (cpumeter.sample + 1) & (CPU_SAMPLES - 1);
+	for (i = 0; i <= BOTAI_START_FRAME; ++i)
+		cpumeter.timeSpent[i + 1].time[cpumeter.sample] = 0;
+	cpumeter.timeSpent[0].time[cpumeter.sample] = 0;
 }
-
 
 /*
 ==============
@@ -1967,7 +1980,7 @@ static void CG_DrawCPUMeter( void ) {
 			// draw the frame time
 			for ( a = 0 ; a < aw ; a++ ) {
 				s = (cpumeter.sample + 1 + a) & (CPU_SAMPLES - 1);
-				v = cpumeter.timeSpent[i].time[s];
+				v = cpumeter.timeSpent[i].time[s] / CPU_SAMPLING_PERIOD;
 				// pre-divide to avoid integer overflows
 				iaverage += cpumeter.timeSpent[i].time[s] / (int)aw;
 				v *= vscale;
@@ -1996,12 +2009,13 @@ static void CG_DrawCPUMeter( void ) {
 			CG_DrawSmallString( x, y, str, 1.0 );
 
 			// draw average time for the last aw frames
-			str = va("^2%4dus", iaverage);
+			str = va("^2%4dus", iaverage / CPU_SAMPLING_PERIOD);
 			CG_DrawSmallString( x, y + ah / 4, str, 1.0 );
 
-			// draw last frame time
-			s = cpumeter.sample & (CPU_SAMPLES - 1);
-			str = va("^1%4dus", cpumeter.timeSpent[i].time[s]);
+			// draw the frame before the last, since the "last" is going to
+			// increase over CPU_SAMPLING_PERIOD intervals
+			s = (cpumeter.sample - 1) & (CPU_SAMPLES - 1);
+			str = va("^1%4dus", cpumeter.timeSpent[i].time[s] / CPU_SAMPLING_PERIOD);
 			CG_DrawSmallString( x, y + ah / 2, str, 1.0 );
 		}
 		y -= 48 + 1;
