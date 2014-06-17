@@ -24,6 +24,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
+// lgodlewski
+#include <tbb/tbb.h>
+static tbb::mutex g_spawnMutex;
+
 typedef struct {
   char oldShader[MAX_QPATH];
   char newShader[MAX_QPATH];
@@ -390,6 +394,8 @@ EntPtr G_Spawn( void ) {
 	int			i, force;
 	EntPtr	e;
 
+	tbb::mutex::scoped_lock lock(g_spawnMutex); // lgodlewski
+
 	e = NULL;	// shut up warning
 	i = 0;		// shut up warning
 	for ( force = 0 ; force < 2 ; force++ ) {
@@ -441,6 +447,8 @@ G_EntitiesFree
 qboolean G_EntitiesFree( void ) {
 	int			i;
 	EntPtr	e;
+
+	tbb::mutex::scoped_lock lock(g_spawnMutex); // lgodlewski
 
 	e = &g_entities[MAX_CLIENTS];
 	for ( i = MAX_CLIENTS; i < level.num_entities; i++, e++) {
@@ -525,7 +533,7 @@ of ent.  Ent should be unlinked before calling this!
 void G_KillBox (EntPtr ent) {
 	int			i, num;
 	int			touch[MAX_GENTITIES];
-	EntPtr	hit;
+	EntPtr		hit;
 	vec3_t		mins, maxs;
 
 	VectorAdd( ent->client->ps.origin, ent->r.mins, mins );

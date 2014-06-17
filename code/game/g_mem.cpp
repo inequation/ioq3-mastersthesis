@@ -27,6 +27,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
+// lgodlewski
+#include <tbb/tbb.h>
+static tbb::mutex g_memMutex;
 
 #define POOLSIZE	(640 * 1024)
 
@@ -39,6 +42,8 @@ void *G_Alloc( int size ) {
 	if ( g_debugAlloc.integer ) {
 		G_Printf( "G_Alloc of %i bytes (%i left)\n", size, POOLSIZE - allocPoint - ( ( size + 31 ) & ~31 ) );
 	}
+
+	tbb::mutex::scoped_lock lock(g_memMutex); // lgodlewski
 
 	if ( allocPoint + size > POOLSIZE ) {
 	  G_Error( "G_Alloc: failed on allocation of %i bytes", size );
@@ -57,5 +62,6 @@ void G_InitMemory( void ) {
 }
 
 void Svcmd_GameMem_f( void ) {
+	tbb::mutex::scoped_lock lock(g_memMutex);	// lgodlewski
 	G_Printf( "Game memory status: %i out of %i bytes allocated\n", allocPoint, POOLSIZE );
 }
