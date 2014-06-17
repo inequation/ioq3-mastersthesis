@@ -919,7 +919,7 @@ ifndef SHLIBCXXFLAGS
 endif
 
 ifndef CXXFLAGS
-  CXXFLAGS=-std=c++11 $(subst -Wimplicit,,$(subst -Wstrict-prototypes,,$(CFLAGS))) -Wno-write-strings -Wno-sign-compare
+  CXXFLAGS=-std=c++11 -rdynamic $(subst -Wimplicit,,$(subst -Wstrict-prototypes,,$(CFLAGS))) -Wno-write-strings -Wno-sign-compare
 endif
 
 ifndef RANLIB
@@ -1148,13 +1148,13 @@ endef
 
 define DO_GAME_CXX
 $(echo_cmd) "GAME_CXX $<"
-$(Q)$(CXX) $(BASEGAME_CXXFLAGS) -DQAGAME $(SHLIBCXXFLAGS) $(CXXFLAGS) $(OPTIMIZEVM) -o $@ -c $<
+$(Q)$(CXX) $(BASEGAME_CXXFLAGS) -DQAGAME $(SHLIBCXXFLAGS) $(CXXFLAGS) $(OPTIMIZEVM) -o $@ -c -x c++ $<
 $(Q)$(DO_QVM_DEP)
 endef
 
 define DO_CGAME_CXX
 $(echo_cmd) "CGAME_CXX $<"
-$(Q)$(CXX) $(BASEGAME_CXXFLAGS) -DCGAME $(SHLIBCXXFLAGS) $(CXXFLAGS) $(OPTIMIZEVM) -o $@ -c $<
+$(Q)$(CXX) $(BASEGAME_CXXFLAGS) -DCGAME $(SHLIBCXXFLAGS) $(CXXFLAGS) $(OPTIMIZEVM) -o $@ -c -x c++ $<
 $(Q)$(DO_QVM_DEP)
 endef
 
@@ -1172,13 +1172,13 @@ endef
 
 define DO_GAME_CXX_MISSIONPACK
 $(echo_cmd) "GAME_CXX_MISSIONPACK $<"
-$(Q)$(CXX) $(MISSIONPACK_CXXFLAGS) -DQAGAME $(SHLIBCXXFLAGS) $(CXXFLAGS) $(OPTIMIZEVM) -o $@ -c $<
+$(Q)$(CXX) $(MISSIONPACK_CXXFLAGS) -DQAGAME $(SHLIBCXXFLAGS) $(CXXFLAGS) $(OPTIMIZEVM) -o $@ -c -x c++ $<
 $(Q)$(DO_QVM_DEP)
 endef
 
 define DO_CGAME_CXX_MISSIONPACK
 $(echo_cmd) "CGAME_CXX_MISSIONPACK $<"
-$(Q)$(CXX) $(MISSIONPACK_CXXFLAGS) -DCGAME $(SHLIBCXXFLAGS) $(CXXFLAGS) $(OPTIMIZEVM) -o $@ -c $<
+$(Q)$(CXX) $(MISSIONPACK_CXXFLAGS) -DCGAME $(SHLIBCXXFLAGS) $(CXXFLAGS) $(OPTIMIZEVM) -o $@ -c -x c++ $<
 $(Q)$(DO_QVM_DEP)
 endef
 
