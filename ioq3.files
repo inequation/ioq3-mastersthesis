@@ -144,10 +144,7 @@ code/game/ai_vcmd.h
 code/game/bg_lib.c
 code/game/bg_lib.h
 code/game/bg_local.h
-code/game/bg_misc.c
-code/game/bg_pmove.c
 code/game/bg_public.h
-code/game/bg_slidemove.c
 code/game/chars.h
 code/game/EntPtr.h
 code/game/g_active.cpp
@@ -906,3 +903,10 @@ code/zlib/zutil.h
 ui/menudef.h
 code/game/EntPtr.cpp
 Makefile
+code/game/bg_lib.c
+code/game/bg_lib.h
+code/game/bg_local.h
+code/game/bg_misc.c
+code/game/bg_pmove.c
+code/game/bg_public.h
+code/game/bg_slidemove.c
