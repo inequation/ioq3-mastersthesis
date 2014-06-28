@@ -62,7 +62,7 @@ void trap_Error( const char *text )
 }
 
 int		trap_Milliseconds( void ) {
-	tbb::recursive_mutex::scoped_lock lock(g_syscallMutex);	// lgodlewski
+	// lgodlewski: no mutex here, Sys_Milliseconds() is thread-safe
 	return g_syscall( G_MILLISECONDS );
 }
 int		trap_Argc( void ) {
