@@ -341,6 +341,28 @@ intptr_t QDECL VM_DllSyscall( intptr_t arg, ... ) {
   intptr_t args[MAX_VMSYSCALL_ARGS];
   int i;
   va_list ap;
+
+  args[0] = arg;
+
+  va_start(ap, arg);
+  for (i = 1; i < ARRAY_LEN (args); i++)
+	args[i] = va_arg(ap, intptr_t);
+  va_end(ap);
+
+  return currentVM->systemCall( args );
+#else // original id code
+	return currentVM->systemCall( &arg );
+#endif
+}
+
+extern vm_t *gvm;
+intptr_t QDECL VM_DllSyscallGame( intptr_t arg, ... ) {
+	assert(currentVM == gvm);
+#if !id386 || defined __clang__
+  // rcg010206 - see commentary above
+  intptr_t args[MAX_VMSYSCALL_ARGS];
+  int i;
+  va_list ap;
   
   args[0] = arg;
   
@@ -349,11 +371,57 @@ intptr_t QDECL VM_DllSyscall( intptr_t arg, ... ) {
     args[i] = va_arg(ap, intptr_t);
   va_end(ap);
   
-  return currentVM->systemCall( args );
+  return gvm->systemCall( args );
 #else // original id code
-	return currentVM->systemCall( &arg );
+	return gvm->systemCall( &arg );
 #endif
 }
+
+#ifndef DEDICATED
+extern vm_t *cgvm;
+extern vm_t *uivm;
+intptr_t QDECL VM_DllSyscallCGame( intptr_t arg, ... ) {
+	assert(currentVM == cgvm);
+#if !id386 || defined __clang__
+  // rcg010206 - see commentary above
+  intptr_t args[MAX_VMSYSCALL_ARGS];
+  int i;
+  va_list ap;
+
+  args[0] = arg;
+
+  va_start(ap, arg);
+  for (i = 1; i < ARRAY_LEN (args); i++)
+	args[i] = va_arg(ap, intptr_t);
+  va_end(ap);
+
+  return cgvm->systemCall( args );
+#else // original id code
+	return cgvm->systemCall( &arg );
+#endif
+}
+
+intptr_t QDECL VM_DllSyscallUI( intptr_t arg, ... ) {
+	assert(currentVM == uivm);
+#if !id386 || defined __clang__
+  // rcg010206 - see commentary above
+  intptr_t args[MAX_VMSYSCALL_ARGS];
+  int i;
+  va_list ap;
+
+  args[0] = arg;
+
+  va_start(ap, arg);
+  for (i = 1; i < ARRAY_LEN (args); i++)
+	args[i] = va_arg(ap, intptr_t);
+  va_end(ap);
+
+  return uivm->systemCall( args );
+#else // original id code
+	return uivm->systemCall( &arg );
+#endif
+}
+#endif
 
 
 /*
@@ -614,9 +682,21 @@ vm_t *VM_Create( const char *module, intptr_t (*systemCalls)(intptr_t *),
 		
 		if(retval == VMI_NATIVE)
 		{
+			// lgodlewski: use a separate callback per VM type
+			intptr_t QDECL (*syscall)( intptr_t arg, ... ) = VM_DllSyscall;
+			if (vm->name[0] == 'q') syscall = VM_DllSyscallGame;
+			switch (vm->name[0]) {
+				case 'q':	syscall = VM_DllSyscallGame;	break;
+#ifndef DEDICATED
+				case 'c':	syscall = VM_DllSyscallCGame;	break;
+				case 'u':	syscall = VM_DllSyscallUI;		break;
+#endif
+				default:	Com_Error(ERR_FATAL, "Unknown VM type");
+			}
+
 			Com_Printf("Try loading dll file %s\n", filename);
 
-			vm->dllHandle = Sys_LoadGameDll(filename, &vm->entryPoint, VM_DllSyscall);
+			vm->dllHandle = Sys_LoadGameDll(filename, &vm->entryPoint, syscall);
 			
 			if(vm->dllHandle)
 			{
