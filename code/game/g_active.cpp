@@ -1017,6 +1017,7 @@ void ClientThink( int clientNum ) {
 	EntPtr ent;
 
 	ent = g_entities + clientNum;
+	ScopedEntityContext context(ent);
 	trap_GetUsercmd( clientNum, &ent->client->pers.cmd );
 
 	// mark the time we got info, so we can display the

@@ -42,6 +42,9 @@ typedef struct {
 gentity_t		g_entities[MAX_GENTITIES];
 gclient_t		g_clients[MAX_CLIENTS];
 
+// lgodlewski
+EntityIsland	g_islands[MAX_GENTITIES];
+
 vmCvar_t	g_gametype;
 vmCvar_t	g_dmflags;
 vmCvar_t	g_fraglimit;
@@ -541,6 +544,12 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	for ( i=0 ; i<MAX_CLIENTS ; i++ ) {
 		g_entities[i].classname = "clientslot";
 	}
+
+	// lgodlewski: initialize all islands for this game
+	level.islands = g_islands;
+	level.num_islands = 0;
+	for (i = 0; i < level.num_entities; ++i)
+		g_islands[i].clear();
 
 	// let the server system know where the entites are
 	trap_LocateGameData( level.gentities, level.num_entities, sizeof( gentity_t ), 
@@ -1839,69 +1848,78 @@ void G_RunFrame( int levelTime ) {
 	// get any cvar changes
 	G_UpdateCvars();
 
+	// lgodlewski: rebuild islands, if dependency graph is dirty
+	DepGraph::RebuildIslands();
+
 	//
 	// go through all allocated objects
 	//
-	tbb::parallel_for(tbb::blocked_range<int>(0, level.num_entities),
+	tbb::parallel_for(tbb::blocked_range<int>(0, level.num_islands),
 		[=](const tbb::blocked_range<int>& r) {
-			EntPtr ent = &g_entities[r.begin()];
-			for (int i=r.begin() ; i!=r.end() ; i++, ent++) {
-				if ( !ent->inuse ) {
-					continue;
-				}
+			auto island = &level.islands[r.begin()];
+			for (int i=r.begin() ; i!=r.end() ; ++i, ++island) {
+				for (auto it = island->begin() ; it != island->end() ; ++it) {
+					EntPtr ent = *it;
+					if ( !ent->inuse ) {
+						continue;
+					}
 
-				// clear events that are too old
-				if ( level.time - ent->eventTime > EVENT_VALID_MSEC ) {
-					if ( ent->s.event ) {
-						ent->s.event = 0;	// &= EV_EVENT_BITS;
-						if ( ent->client ) {
-							ent->client->ps.externalEvent = 0;
-							// predicted events should never be set to zero
-							//ent->client->ps.events[0] = 0;
-							//ent->client->ps.events[1] = 0;
+					// lgodlewski
+					ScopedEntityContext context(ent);
+
+					// clear events that are too old
+					if ( level.time - ent->eventTime > EVENT_VALID_MSEC ) {
+						if ( ent->s.event ) {
+							ent->s.event = 0;	// &= EV_EVENT_BITS;
+							if ( ent->client ) {
+								ent->client->ps.externalEvent = 0;
+								// predicted events should never be set to zero
+								//ent->client->ps.events[0] = 0;
+								//ent->client->ps.events[1] = 0;
+							}
+						}
+						if ( ent->freeAfterEvent ) {
+							// tempEntities or dropped items completely go away after their event
+							G_FreeEntity( ent );
+							continue;
+						} else if ( ent->unlinkAfterEvent ) {
+							// items that will respawn will hide themselves after their pickup event
+							ent->unlinkAfterEvent = qfalse;
+							trap_UnlinkEntity( ent );
 						}
 					}
+
+					// temporary entities don't think
 					if ( ent->freeAfterEvent ) {
-						// tempEntities or dropped items completely go away after their event
-						G_FreeEntity( ent );
 						continue;
-					} else if ( ent->unlinkAfterEvent ) {
-						// items that will respawn will hide themselves after their pickup event
-						ent->unlinkAfterEvent = qfalse;
-						trap_UnlinkEntity( ent );
 					}
-				}
 
-				// temporary entities don't think
-				if ( ent->freeAfterEvent ) {
-					continue;
-				}
+					if ( !ent->r.linked && ent->neverFree ) {
+						continue;
+					}
 
-				if ( !ent->r.linked && ent->neverFree ) {
-					continue;
-				}
+					if ( ent->s.eType == ET_MISSILE ) {
+						G_RunMissile( ent );
+						continue;
+					}
 
-				if ( ent->s.eType == ET_MISSILE ) {
-					G_RunMissile( ent );
-					continue;
-				}
+					if ( ent->s.eType == ET_ITEM || ent->physicsObject ) {
+						G_RunItem( ent );
+						continue;
+					}
 
-				if ( ent->s.eType == ET_ITEM || ent->physicsObject ) {
-					G_RunItem( ent );
-					continue;
-				}
+					if ( ent->s.eType == ET_MOVER ) {
+						G_RunMover( ent );
+						continue;
+					}
 
-				if ( ent->s.eType == ET_MOVER ) {
-					G_RunMover( ent );
-					continue;
-				}
+					if ( i < MAX_CLIENTS ) {
+						G_RunClient( ent );
+						continue;
+					}
 
-				if ( i < MAX_CLIENTS ) {
-					G_RunClient( ent );
-					continue;
+					G_RunThink( ent );
 				}
-
-				G_RunThink( ent );
 			}
 		});
 

@@ -2343,7 +2343,7 @@ Q3GOBJ_ = \
   $(B)/$(BASEGAME)/qcommon/q_math.o \
   $(B)/$(BASEGAME)/qcommon/q_shared.o
 
-Q3GOBJ = $(Q3GOBJ_) $(B)/$(BASEGAME)/game/g_syscalls.o $(B)/$(BASEGAME)/game/EntPtr.o
+Q3GOBJ = $(Q3GOBJ_) $(B)/$(BASEGAME)/game/g_syscalls.o $(B)/$(BASEGAME)/game/DependencyGraph.o
 Q3GVMOBJ = $(Q3GOBJ_:%.o=%.asm)
 
 $(B)/$(BASEGAME)/qagame$(SHLIBNAME): $(Q3GOBJ)
@@ -2394,7 +2394,7 @@ MPGOBJ_ = \
   $(B)/$(MISSIONPACK)/qcommon/q_math.o \
   $(B)/$(MISSIONPACK)/qcommon/q_shared.o
 
-MPGOBJ = $(MPGOBJ_) $(B)/$(MISSIONPACK)/game/g_syscalls.o $(B)/$(BASEGAME)/game/EntPtr.o
+MPGOBJ = $(MPGOBJ_) $(B)/$(MISSIONPACK)/game/g_syscalls.o $(B)/$(BASEGAME)/game/DependencyGraph.o
 MPGVMOBJ = $(MPGOBJ_:%.o=%.asm)
 
 $(B)/$(MISSIONPACK)/qagame$(SHLIBNAME): $(MPGOBJ)

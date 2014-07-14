@@ -67,7 +67,7 @@ typedef enum {
 typedef struct gentity_s gentity_t;
 typedef struct gclient_s gclient_t;
 
-#include "EntPtr.h"
+#include "DependencyGraph.h"
 
 struct gentity_s {
 	entityState_t	s;				// communicated by server to clients
@@ -176,6 +176,9 @@ struct gentity_s {
 	float		random;
 
 	gitem_t		*item;			// for bonus items
+
+	// lgodlewski
+	EntityIsland	*island;
 };
 
 
@@ -409,6 +412,10 @@ typedef struct {
 #ifdef MISSIONPACK
 	int			portalSequence;
 #endif
+
+	// lgodlewski
+	EntityIsland	*islands;
+	int				num_islands;
 } level_locals_t;
 
 
