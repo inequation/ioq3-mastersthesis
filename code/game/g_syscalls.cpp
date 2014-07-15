@@ -136,10 +136,10 @@ void trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int buf
 }
 
 
-void trap_LocateGameData( gentity_t *gEnts, int numGEntities, int sizeofGEntity_t,
-						 playerState_t *clients, int sizeofGClient ) {
+void trap_LocateGameData( const gentity_t *gROEnts, gentity_t *gRWEnts, int numGEntities, int sizeofGEntity_t,
+						 const playerState_t *ROclients, playerState_t *RWclients, int sizeofGClient ) {
 	tbb::recursive_mutex::scoped_lock lock(g_syscallMutex);	// lgodlewski
-	g_syscall( G_LOCATE_GAME_DATA, gEnts, numGEntities, sizeofGEntity_t, clients, sizeofGClient );
+	g_syscall( G_LOCATE_GAME_DATA, gROEnts, gRWEnts, numGEntities, sizeofGEntity_t, ROclients, RWclients, sizeofGClient );
 }
 
 void trap_DropClient( int clientNum, const char *reason ) {

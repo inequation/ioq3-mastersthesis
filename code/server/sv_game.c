@@ -33,11 +33,13 @@ int	SV_NumForGentity( sharedEntity_t *ent ) {
 	int		num;
 
 	num = ( (byte *)ent - (byte *)sv.gentities ) / sv.gentitySize;
+	if (num < 0 || num >= sv.num_entities)
+		num = ( (byte *)ent - (byte *)sv.gentities_writable ) / sv.gentitySize;
 
 	return num;
 }
 
-sharedEntity_t *SV_GentityNum( int num ) {
+const sharedEntity_t *SV_GentityNum( int num ) {
 	sharedEntity_t *ent;
 
 	ent = (sharedEntity_t *)((byte *)sv.gentities + sv.gentitySize*(num));
@@ -45,10 +47,26 @@ sharedEntity_t *SV_GentityNum( int num ) {
 	return ent;
 }
 
-playerState_t *SV_GameClientNum( int num ) {
+sharedEntity_t *SV_WritableGentityNum( int num ) {
+	sharedEntity_t *ent;
+
+	ent = (sharedEntity_t *)((byte *)sv.gentities_writable + sv.gentitySize*(num));
+
+	return ent;
+}
+
+const playerState_t *SV_GameClientNum( int num ) {
 	playerState_t	*ps;
 
 	ps = (playerState_t *)((byte *)sv.gameClients + sv.gameClientSize*(num));
+
+	return ps;
+}
+
+playerState_t *SV_WritableGameClientNum( int num ) {
+	playerState_t	*ps;
+
+	ps = (playerState_t *)((byte *)sv.gameClients_writable + sv.gameClientSize*(num));
 
 	return ps;
 }
@@ -60,11 +78,38 @@ svEntity_t	*SV_SvEntityForGentity( sharedEntity_t *gEnt ) {
 	return &sv.svEntities[ gEnt->s.number ];
 }
 
-sharedEntity_t *SV_GEntityForSvEntity( svEntity_t *svEnt ) {
+const sharedEntity_t *SV_GEntityForSvEntity( svEntity_t *svEnt ) {
 	int		num;
 
 	num = svEnt - sv.svEntities;
 	return SV_GentityNum( num );
+}
+
+sharedEntity_t *SV_WritableGEntityForSvEntity( svEntity_t *svEnt ) {
+	int		num;
+
+	num = svEnt - sv.svEntities;
+	return SV_WritableGentityNum( num );
+}
+
+sharedEntity_t *SV_WritableGentity( const sharedEntity_t *gEnt ) {
+	int num;
+	sharedEntity_t *ent;
+
+	num = ((byte *)gEnt - (byte *)sv.gentities) / sv.gentitySize;
+	ent = (sharedEntity_t *)((byte *)sv.gentities_writable + sv.gentitySize*(num));
+
+	return ent;
+}
+
+playerState_t *SV_WritableGameClient( playerState_t *cl ) {
+	int num;
+	playerState_t	*ps;
+
+	num = ((byte *)cl - (byte *)sv.gameClients) / sv.gameClientSize;
+	ps = (playerState_t *)((byte *)sv.gameClients_writable + sv.gameClientSize*(num));
+
+	return ps;
 }
 
 /*
@@ -250,13 +295,15 @@ SV_LocateGameData
 
 ===============
 */
-void SV_LocateGameData( sharedEntity_t *gEnts, int numGEntities, int sizeofGEntity_t,
-					   playerState_t *clients, int sizeofGameClient ) {
-	sv.gentities = gEnts;
+void SV_LocateGameData( sharedEntity_t *gROEnts, sharedEntity_t *gRWEnts, int numGEntities, int sizeofGEntity_t,
+					   playerState_t *ROclients, playerState_t *RWclients, int sizeofGameClient ) {
+	sv.gentities = gROEnts;
+	sv.gentities_writable = gRWEnts;
 	sv.gentitySize = sizeofGEntity_t;
 	sv.num_entities = numGEntities;
 
-	sv.gameClients = clients;
+	sv.gameClients = ROclients;
+	sv.gameClients_writable = RWclients;
 	sv.gameClientSize = sizeofGameClient;
 }
 
@@ -339,7 +386,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return FS_Seek( args[1], args[2], args[3] );
 
 	case G_LOCATE_GAME_DATA:
-		SV_LocateGameData( VMA(1), args[2], args[3], VMA(4), args[5] );
+		SV_LocateGameData( VMA(1), VMA(2), args[3], args[4], VMA(5), VMA(6), args[7] );
 		return 0;
 	case G_DROP_CLIENT:
 		SV_GameDropClient( args[1], VMA(2) );

@@ -60,7 +60,7 @@ int SV_BotAllocateClient(void) {
 	}
 
 	cl->gentity = SV_GentityNum( i );
-	cl->gentity->s.number = i;
+	SV_WritableGentity(cl->gentity)->s.number = i;
 	cl->state = CS_ACTIVE;
 	cl->lastPacketTime = svs.time;
 	cl->netchan.remoteAddress.type = NA_BOT;
@@ -84,7 +84,7 @@ void SV_BotFreeClient( int clientNum ) {
 	cl->state = CS_FREE;
 	cl->name[0] = 0;
 	if ( cl->gentity ) {
-		cl->gentity->r.svFlags &= ~SVF_BOT;
+		SV_WritableGentity(cl->gentity)->r.svFlags &= ~SVF_BOT;
 	}
 }
 

@@ -930,7 +930,7 @@ static void SV_CalcPings( void ) {
 		}
 
 		// let the game dll know about the ping
-		ps = SV_GameClientNum( i );
+		ps = SV_WritableGameClientNum( i );
 		ps->ping = cl->ping;
 	}
 }

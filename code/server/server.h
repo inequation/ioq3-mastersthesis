@@ -85,10 +85,12 @@ typedef struct {
 
 	// the game virtual machine will update these on init and changes
 	sharedEntity_t	*gentities;
+	sharedEntity_t	*gentities_writable;
 	int				gentitySize;
 	int				num_entities;		// current number, <= MAX_GENTITIES
 
 	playerState_t	*gameClients;
+	playerState_t	*gameClients_writable;
 	int				gameClientSize;		// will be > sizeof(playerState_t) due to game private data
 
 	int				restartTime;
@@ -147,7 +149,7 @@ typedef struct client_s {
 	int				lastMessageNum;		// for delta compression
 	int				lastClientCommand;	// reliable client message sequence
 	char			lastClientCommandString[MAX_STRING_CHARS];
-	sharedEntity_t	*gentity;			// SV_GentityNum(clientnum)
+	const sharedEntity_t	*gentity;			// SV_GentityNum(clientnum)
 	char			name[MAX_NAME_LENGTH];			// extracted from userinfo, high bits masked
 
 	// downloading
@@ -402,14 +404,18 @@ void SV_SendClientSnapshot( client_t *client );
 // sv_game.c
 //
 int	SV_NumForGentity( sharedEntity_t *ent );
-sharedEntity_t *SV_GentityNum( int num );
-playerState_t *SV_GameClientNum( int num );
+const sharedEntity_t *SV_GentityNum( int num );
+sharedEntity_t *SV_WritableGentityNum( int num );
+const playerState_t *SV_GameClientNum( int num );
+playerState_t *SV_WritableGameClientNum( int num );
 svEntity_t	*SV_SvEntityForGentity( sharedEntity_t *gEnt );
-sharedEntity_t *SV_GEntityForSvEntity( svEntity_t *svEnt );
+const sharedEntity_t *SV_GEntityForSvEntity( svEntity_t *svEnt );
+sharedEntity_t *SV_WritableGEntityForSvEntity( svEntity_t *svEnt );
 void		SV_InitGameProgs ( void );
 void		SV_ShutdownGameProgs ( void );
 void		SV_RestartGameProgs( void );
 qboolean	SV_inPVS (const vec3_t p1, const vec3_t p2);
+sharedEntity_t *SV_WritableGentity( const sharedEntity_t *gEnt );
 
 //
 // sv_bot.c

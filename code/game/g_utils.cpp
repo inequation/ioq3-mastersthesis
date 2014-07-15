@@ -394,7 +394,7 @@ EntPtr G_Spawn( void ) {
 	int			i, force;
 	EntPtr	e;
 
-	tbb::mutex::scoped_lock lock(g_spawnMutex); // lgodlewski
+	g_spawnMutex.lock(); // lgodlewski
 
 	e = NULL;	// shut up warning
 	i = 0;		// shut up warning
@@ -431,9 +431,13 @@ EntPtr G_Spawn( void ) {
 	// open up a new slot
 	level.num_entities++;
 
+	g_spawnMutex.unlock(); // lgodlewski
+
 	// let the server system know that there are more entities
-	trap_LocateGameData( level.gentities, level.num_entities, sizeof( gentity_t ), 
-		&level.clients[0].ps, sizeof( level.clients[0] ) );
+	// lgodlewski: feed the server the read-only data
+	extern const gclient_t *g_clients_old;
+	trap_LocateGameData( g_entities_old, level.gentities, level.num_entities, sizeof( gentity_t ),
+		&g_clients_old[0].ps, &level.clients[0].ps, sizeof( level.clients[0] ) );
 
 	G_InitGentity( e );
 	return e;

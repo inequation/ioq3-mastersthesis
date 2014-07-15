@@ -39,8 +39,10 @@ typedef struct {
   qboolean teamShader;        // track and if changed, update shader state
 } cvarTable_t;
 
-gentity_t		g_entities[MAX_GENTITIES];
-gclient_t		g_clients[MAX_CLIENTS];
+gentity_t		*g_entities;		// lgodlewski: turned this into a pointer so that we can mmap() and mprotect()
+const gentity_t	*g_entities_old;	// lgodlewski: previous frame, read-only
+gclient_t		*g_clients;			// lgodlewski: turned this into a pointer so that we can mmap() and mprotect()
+const gclient_t	*g_clients_old;		// lgodlewski: previous frame, read-only
 
 vmCvar_t	g_gametype;
 vmCvar_t	g_dmflags;
@@ -519,9 +521,29 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	G_InitWorldSession();
 
+	// lgodlewski: g_entities_old gets its own storage after first frame
+	if (!g_entities)
+	{
+		g_entities = (gentity_t *)mmap(NULL, MAX_GENTITIES * sizeof(g_entities[0]), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		assert(g_entities);
+	}
+	else if (g_entities_old)
+		munmap((void *)g_entities_old, MAX_GENTITIES * sizeof(g_entities[0]));
+	g_entities_old = g_entities;
+
 	// initialize all entities for this game
 	memset( g_entities, 0, MAX_GENTITIES * sizeof(g_entities[0]) );
 	level.gentities = g_entities;
+
+	// lgodlewski: g_clients_old gets its own storage after first frame
+	if (!g_clients)
+	{
+		g_clients = (gclient_t *)mmap(NULL, MAX_CLIENTS * sizeof(g_clients[0]), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		assert(g_clients);
+	}
+	else if (g_clients_old)
+		munmap((void *)g_clients_old, MAX_CLIENTS * sizeof(g_clients[0]));
+	g_clients_old = g_clients;
 
 	// initialize all clients for this game
 	level.maxclients = g_maxclients.integer;
@@ -543,8 +565,8 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	}
 
 	// let the server system know where the entites are
-	trap_LocateGameData( level.gentities, level.num_entities, sizeof( gentity_t ), 
-		&level.clients[0].ps, sizeof( level.clients[0] ) );
+	trap_LocateGameData( g_entities_old, level.gentities, level.num_entities, sizeof( gentity_t ),
+		&g_clients_old[0].ps, &level.clients[0].ps, sizeof( level.clients[0] ) );
 
 	// reserve some spots for dead player bodies
 	InitBodyQue();
@@ -1915,6 +1937,28 @@ void G_RunFrame( int levelTime ) {
 				}
 			}
 		});
+
+	// lgodlewski: flip the entity buffers
+	if (g_entities_old == g_entities)
+	{
+		g_entities_old = (gentity_t *)mmap(NULL, MAX_GENTITIES * sizeof(g_entities[0]), PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		assert(g_entities_old);
+		trap_LocateGameData(g_entities_old, level.gentities, level.num_entities, sizeof(gentity_t),
+			&g_clients_old[0].ps, &level.clients[0].ps, sizeof(level.clients[0]));
+	}
+	if (g_clients_old == g_clients)
+	{
+		g_clients_old = (gclient_t *)mmap(NULL, MAX_CLIENTS * sizeof(g_clients[0]), PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		assert(g_clients_old);
+		trap_LocateGameData(g_entities_old, level.gentities, level.num_entities, sizeof(gentity_t),
+			&g_clients_old[0].ps, &level.clients[0].ps, sizeof(level.clients[0]));
+	}
+	mprotect((void *)g_entities_old, MAX_GENTITIES * sizeof(g_entities[0]), PROT_READ | PROT_WRITE);
+	mprotect((void *)g_clients_old, MAX_CLIENTS * sizeof(g_clients[0]), PROT_READ | PROT_WRITE);
+	memcpy((void *)g_entities_old, g_entities, level.num_entities * sizeof(g_entities[0]));
+	memcpy((void *)g_clients_old, g_clients, MAX_CLIENTS * sizeof(g_clients[0]));
+	mprotect((void *)g_clients_old, MAX_GENTITIES * sizeof(g_clients[0]), PROT_READ);
+	mprotect((void *)g_entities_old, MAX_GENTITIES * sizeof(g_entities[0]), PROT_READ);
 
 	// see if it is time to do a tournement restart
 	CheckTournament();

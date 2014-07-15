@@ -26,6 +26,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "bg_public.h"
 #include "g_public.h"
 
+// lgodlewski
+#include <sys/mman.h>
+
 //==================================================================
 
 // the "gameversion" client command will print this plus compile date
@@ -312,7 +315,7 @@ struct gclient_s {
 	int			timeResidual;
 
 #ifdef MISSIONPACK
-	EntPtr	persistantPowerup;
+	EntPtr		persistantPowerup;
 	int			portalID;
 	int			ammoTimes[WP_NUM_WEAPONS];
 	int			invulnerabilityTime;
@@ -693,7 +696,8 @@ void BotTestAAS(vec3_t origin);
 
 
 extern	level_locals_t	level;
-extern	gentity_t		g_entities[MAX_GENTITIES];
+extern	gentity_t		*g_entities;		// lgodlewski: turned this into a pointer so that we can mmap() and mprotect()
+extern	const gentity_t	*g_entities_old;	// lgodlewski: previous frame, read-only
 
 #define	FOFS(x) ((size_t)&(((gentity_t *)0)->x))
 
@@ -768,7 +772,7 @@ void	trap_Cvar_Set( const char *var_name, const char *value );
 int		trap_Cvar_VariableIntegerValue( const char *var_name );
 float	trap_Cvar_VariableValue( const char *var_name );
 void	trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize );
-void	trap_LocateGameData( gentity_t *gEnts, int numGEntities, int sizeofGEntity_t, playerState_t *gameClients, int sizeofGameClient );
+void	trap_LocateGameData( const gentity_t *gROEnts, gentity_t *gRWEnts, int numGEntities, int sizeofGEntity_t, const playerState_t *ROclients, playerState_t *RWclients, int sizeofGClient );
 void	trap_DropClient( int clientNum, const char *reason );
 void	trap_SendServerCommand( int clientNum, const char *text );
 void	trap_SetConfigstring( int num, const char *string );
