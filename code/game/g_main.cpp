@@ -1957,7 +1957,7 @@ void G_RunFrame( int levelTime ) {
 	mprotect((void *)g_clients_old, MAX_CLIENTS * sizeof(g_clients[0]), PROT_READ | PROT_WRITE);
 	memcpy((void *)g_entities_old, g_entities, level.num_entities * sizeof(g_entities[0]));
 	memcpy((void *)g_clients_old, g_clients, MAX_CLIENTS * sizeof(g_clients[0]));
-	mprotect((void *)g_clients_old, MAX_GENTITIES * sizeof(g_clients[0]), PROT_READ);
+	mprotect((void *)g_clients_old, MAX_CLIENTS * sizeof(g_clients[0]), PROT_READ);
 	mprotect((void *)g_entities_old, MAX_GENTITIES * sizeof(g_entities[0]), PROT_READ);
 
 	// see if it is time to do a tournement restart

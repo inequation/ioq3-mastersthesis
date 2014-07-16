@@ -394,44 +394,45 @@ EntPtr G_Spawn( void ) {
 	int			i, force;
 	EntPtr	e;
 
-	g_spawnMutex.lock(); // lgodlewski
+	{
+		tbb::mutex::scoped_lock lock(g_spawnMutex); // lgodlewski
 
-	e = NULL;	// shut up warning
-	i = 0;		// shut up warning
-	for ( force = 0 ; force < 2 ; force++ ) {
-		// if we go through all entities and can't find one to free,
-		// override the normal minimum times before use
-		e = &g_entities[MAX_CLIENTS];
-		for ( i = MAX_CLIENTS ; i<level.num_entities ; i++, e++) {
-			if ( e->inuse ) {
-				continue;
+		e = NULL;	// shut up warning
+		i = 0;		// shut up warning
+		for ( force = 0 ; force < 2 ; force++ ) {
+			// if we go through all entities and can't find one to free,
+			// override the normal minimum times before use
+			e = &g_entities[MAX_CLIENTS];
+			for ( i = MAX_CLIENTS ; i<level.num_entities ; i++, e++) {
+				if ( e->inuse ) {
+					continue;
+				}
+
+				// the first couple seconds of server time can involve a lot of
+				// freeing and allocating, so relax the replacement policy
+				if ( !force && e->freetime > level.startTime + 2000 && level.time - e->freetime < 1000 ) {
+					continue;
+				}
+
+				// reuse this slot
+				G_InitGentity( e );
+				return e;
 			}
-
-			// the first couple seconds of server time can involve a lot of
-			// freeing and allocating, so relax the replacement policy
-			if ( !force && e->freetime > level.startTime + 2000 && level.time - e->freetime < 1000 ) {
-				continue;
+			if ( i != MAX_GENTITIES ) {
+				break;
 			}
+		}
+		if ( i == ENTITYNUM_MAX_NORMAL ) {
+			for (i = 0; i < MAX_GENTITIES; i++) {
+				G_Printf("%4i: %s\n", i, g_entities[i].classname);
+			}
+			G_Error( "G_Spawn: no free entities" );
+		}
 
-			// reuse this slot
-			G_InitGentity( e );
-			return e;
-		}
-		if ( i != MAX_GENTITIES ) {
-			break;
-		}
-	}
-	if ( i == ENTITYNUM_MAX_NORMAL ) {
-		for (i = 0; i < MAX_GENTITIES; i++) {
-			G_Printf("%4i: %s\n", i, g_entities[i].classname);
-		}
-		G_Error( "G_Spawn: no free entities" );
-	}
-	
-	// open up a new slot
-	level.num_entities++;
+		// open up a new slot
+		level.num_entities++;
 
-	g_spawnMutex.unlock(); // lgodlewski
+	}
 
 	// let the server system know that there are more entities
 	// lgodlewski: feed the server the read-only data
