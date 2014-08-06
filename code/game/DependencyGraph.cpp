@@ -33,38 +33,65 @@ namespace DepGraph
 {
 	typedef adjacency_list<vecS, vecS, undirectedS>	GraphType;
 	GraphType Graph;
+	tbb::mutex GraphMutex;
 
-	static bool Dirty = true;
+	static volatile bool Dirty = true;
 
-	void AddDep(gentity_t *Depends, gentity_t *On)
+	void AddDep(const gentity_t *Depends, const gentity_t *On)
 	{
 		if (Depends == On)
 			return;
 
-		add_edge(Depends->s.number, On->s.number, Graph);
+		DEP_ASSERT(On != nullptr, "Trying to add a null dependency to #%d! Need to remove/toggle instead?", Depends->s.number);
 
-		Dirty = true;
+		{
+			tbb::mutex::scoped_lock lock(GraphMutex);
+			add_edge(Depends->s.number, On->s.number, Graph);
+			Dirty = true;
+		}
 
 #if DEP_AUTO_CACHE_REBUILD
 		RebuildIslands();
 #endif
 	}
 
-	void RemoveDep(gentity_t *Depends, gentity_t *On)
+	void RemoveDep(const gentity_t *Depends, const gentity_t *On)
 	{
-		if (Depends == On)
+		if (Depends == On || On == nullptr)
 			return;
 
-		add_edge(Depends->s.number, On->s.number, Graph);
-
-		Dirty = true;
+		{
+			tbb::mutex::scoped_lock lock(GraphMutex);
+			remove_edge(Depends->s.number, On->s.number, Graph);
+			Dirty = true;
+		}
 
 #if DEP_AUTO_CACHE_REBUILD
 		RebuildIslands();
 #endif
 	}
 
-	bool IsDependent(gentity_t *Depends, gentity_t *On)
+	void RemoveVertex(const gentity_t *Vertex)
+	{
+		if (Vertex == nullptr)
+			return;
+
+		{
+			tbb::mutex::scoped_lock lock(GraphMutex);
+			for (int i = 0; i < MAX_GENTITIES; ++i)
+			{
+				if (edge(Vertex->s.number, i, Graph).second)
+					remove_edge(Vertex->s.number, i, Graph);
+			}
+			Dirty = true;
+		}
+
+#if DEP_AUTO_CACHE_REBUILD
+		RebuildIslands();
+#endif
+	}
+
+	bool OnSameIsland(const gentity_t *Depends, const gentity_t *On)
 	{
 		if (Depends == On)
 			return true;
@@ -134,6 +161,8 @@ namespace DepGraph
 	{
 		if (!Dirty)
 			return;
+
+		tbb::mutex::scoped_lock lock(GraphMutex);
 
 		for (int i = 0; i < level.num_islands; ++i)
 			level.islands[i].clear();
