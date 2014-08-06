@@ -178,6 +178,7 @@ struct gentity_s {
 	gitem_t		*item;			// for bonus items
 
 	// lgodlewski
+	volatile int	frameTouched;	// number of last frame the entity was touched
 	EntityIsland	*island;
 };
 
