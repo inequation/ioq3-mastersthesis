@@ -6,17 +6,23 @@
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/breadth_first_search.hpp>
 
+#include <tbb/mutex.h>
+
 using namespace boost;
 
-#define DEP_SHOULD_ASSERT		!_NDEBUG
-#define DEP_ASSERTS_ARE_FATAL	1
+#define DEP_SHOULD_ASSERT		!NDEBUG
+#define DEP_ASSERTS_ARE_FATAL	0
+
+// these two are for debugging purposes only – they make everything SLOW!
 #define DEP_AUTO_DEPEND			0
 #define DEP_AUTO_CACHE_REBUILD	0
 
-#if DEP_ASSERTS_ARE_FATAL
-	#define DEP_ASSERT(Cond, Fmt, ...)	{if (!Cond) {fprintf(stderr, Fmt, __VA_ARGS__); abort();}}
-#else
-	#define DEP_ASSERT(Cond, Fmt, ...)	{if (!Cond) G_Printf("[DepGraph] WARNING: " Fmt "\n", __VA_ARGS__);}
+#if DEP_SHOULD_ASSERT
+	#if DEP_ASSERTS_ARE_FATAL
+		#define DEP_ASSERT(Cond, Fmt, ...)	{if (!(Cond)) G_Error("[DepGraph] ERROR: " Fmt "\n", __VA_ARGS__);}
+	#else
+		#define DEP_ASSERT(Cond, Fmt, ...)	{if (!(Cond)) G_Printf("[DepGraph] WARNING: " Fmt "\n", __VA_ARGS__);}
+	#endif
 #endif
 
 tbb::enumerable_thread_specific<gentity_t *> EntityContext::Context;
