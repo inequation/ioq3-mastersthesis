@@ -19,6 +19,11 @@ struct EntPtr
 	EntPtr& operator++();
 	EntPtr operator++(int);
 
+	gentity_t *GetPtrNoCheck() const
+	{return Ptr;}
+	bool isNull() const
+	{return Ptr == nullptr;}
+
 	bool operator==(const EntPtr& Other) const
 	{return Ptr == Other.Ptr;}
 	bool operator!=(const EntPtr& Other) const
@@ -65,11 +70,11 @@ struct ScopedEntityContext
 {
 	ScopedEntityContext(const EntPtr& Current)
 		: PrevPtr(EntityContext::GetEntity())
-	{EntityContext::GetEntity() = Current;}
+	{EntityContext::GetEntity() = Current.Ptr;}
 
 	~ScopedEntityContext()
 	{EntityContext::GetEntity() = PrevPtr;}
 
 private:
-	EntPtr	PrevPtr;
+	gentity_t	*PrevPtr;
 };
