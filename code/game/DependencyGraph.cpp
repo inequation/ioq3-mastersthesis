@@ -209,12 +209,6 @@ EntPtr::EntPtr(const EntPtr& Other)
 	AutoAddDep();
 }
 
-EntPtr::EntPtr(const WeakEntPtr& Other)
-	: Ptr(Other.Ptr)
-{
-	AutoAddDep();
-}
-
 EntPtr::~EntPtr()
 {
 	AutoRemoveDep();
@@ -297,85 +291,6 @@ void EntPtr::AutoRemoveDep() const
 		auto Context = EntityContext::GetEntity();
 		if (Context)
 			DepGraph::RemoveDep(Context, Ptr);
-	}
-#endif
-}
-
-// ===========================================================================
-
-WeakEntPtr::WeakEntPtr()
-	: Ptr(nullptr)
-{
-
-}
-
-WeakEntPtr::WeakEntPtr(gentity_t *entity)
-	: Ptr(entity)
-{
-
-}
-
-WeakEntPtr::WeakEntPtr(const WeakEntPtr& Other)
-	: Ptr(Other.Ptr)
-{
-
-}
-
-WeakEntPtr::WeakEntPtr(const EntPtr& Other)
-	: Ptr(Other.Ptr)
-{
-
-}
-
-WeakEntPtr::~WeakEntPtr()
-{
-
-}
-
-WeakEntPtr& WeakEntPtr::operator=(gentity_t *entity)
-{
-	Ptr = entity;
-	return *this;
-}
-
-const gentity_t& WeakEntPtr::operator*() const
-{
-	AssertDep();
-	return *Ptr;
-}
-
-const gentity_t *WeakEntPtr::operator->() const
-{
-	AssertDep();
-	return Ptr;
-}
-
-WeakEntPtr::operator const gentity_t *() const
-{
-	AssertDep();
-	return Ptr;
-}
-
-WeakEntPtr& WeakEntPtr::operator++()
-{
-	++Ptr;
-	return *this;
-}
-
-WeakEntPtr WeakEntPtr::operator++(int)
-{
-	auto RetVal = Ptr++;
-	return RetVal;
-}
-
-void WeakEntPtr::AssertDep() const
-{
-#if DEP_SHOULD_ASSERT
-	if (Ptr)
-	{
-		auto Context = EntityContext::GetEntity();
-		if (Context && !DepGraph::IsDependent(Context, Ptr))
-			G_Printf("[DepGraph] WARNING: Dependent entity #%d is not on the same island as #%d! Data might be out of date!\n", Context->s.number, Ptr->s.number);
 	}
 #endif
 }

@@ -3,15 +3,12 @@
 #include <tbb/enumerable_thread_specific.h>
 #include <vector>
 
-struct WeakEntPtr;
-
 // basic, dependency-enforcing entity smart pointer
 struct EntPtr
 {
 	EntPtr();
 	EntPtr(gentity_t *entity);
 	EntPtr(const EntPtr& Other);
-	EntPtr(const WeakEntPtr& Other);
 	~EntPtr();
 
 	EntPtr& operator=(gentity_t *entity);
@@ -34,56 +31,20 @@ struct EntPtr
 private:
 	gentity_t	*Ptr;
 
-	void AssertDep() const;
 	void AutoAddDep() const;
 	void AutoRemoveDep() const;
 
-	friend struct WeakEntPtr;
-};
-
-// ===========================================================================
-
-// read-only, non-dependency-enforcing (though dependency-checking) smart pointer
-struct WeakEntPtr
-{
-	WeakEntPtr();
-	WeakEntPtr(gentity_t *entity);
-	WeakEntPtr(const EntPtr& Other);
-	WeakEntPtr(const WeakEntPtr& Other);
-	~WeakEntPtr();
-
-	WeakEntPtr& operator=(gentity_t *entity);
-
-	const gentity_t& operator*() const;
-	const gentity_t *operator->() const;
-	operator const gentity_t *() const;
-	WeakEntPtr& operator++();
-	WeakEntPtr operator++(int);
-
-	bool operator==(const WeakEntPtr& Other) const
-	{return Ptr == Other.Ptr;}
-	bool operator!=(const WeakEntPtr& Other) const
-	{return Ptr != Other.Ptr;}
-	bool operator==(const gentity_t *entity) const
-	{return Ptr == entity;}
-	bool operator!=(const gentity_t *entity) const
-	{return Ptr != entity;}
-
-private:
-	gentity_t	*Ptr;
-
-	void AssertDep() const;
-
-	friend struct EntPtr;
+	friend struct ScopedEntityContext;
 };
 
 // ===========================================================================
 
 namespace DepGraph
 {
-	void AddDep(gentity_t *Depends, gentity_t *On);
-	void RemoveDep(gentity_t *Depends, gentity_t *On);
-	bool IsDependent(gentity_t *Depends, gentity_t *On);
+	void AddDep(const gentity_t *Depends, const gentity_t *On);
+	void RemoveDep(const gentity_t *Depends, const gentity_t *On);
+	void RemoveVertex(const gentity_t *Vertex);
+	bool OnSameIsland(const gentity_t *Depends, const gentity_t *On);
 	void RebuildIslands();
 }
 
