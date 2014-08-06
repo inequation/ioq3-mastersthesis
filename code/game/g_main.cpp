@@ -1860,10 +1860,22 @@ void G_RunFrame( int levelTime ) {
 	//
 	tbb::parallel_for(tbb::blocked_range<int>(0, level.num_islands),
 		[=](const tbb::blocked_range<int>& r) {
-			auto island = &level.islands[r.begin()];
-			for (int i=r.begin() ; i!=r.end() ; ++i, ++island) {
+			for (int i=r.begin() ; i!=r.end() ; ++i) {
+				auto island = &level.islands[i];
 				for (auto it = island->begin() ; it != island->end() ; ++it) {
 					EntPtr ent = *it;
+
+					// lgodlewski: helper struct for recording frame touches
+					struct Toucher {
+						Toucher(EntPtr Ent)
+							: Ptr(Ent.GetPtrNoCheck())
+						{}
+						~Toucher()
+						{Ptr->frameTouched = level.framenum;}
+					private:
+						gentity_t *Ptr;
+					} toucher(ent);
+
 					if ( !ent->inuse ) {
 						continue;
 					}
