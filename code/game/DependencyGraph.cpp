@@ -191,6 +191,43 @@ namespace DepGraph
 
 // ===========================================================================
 
+static void StallUntilEntityTouched(gentity_t *ent)
+{
+	// FIXME: does this really need to be a busy wait?
+	while (ent->frameTouched != level.framenum)
+		tbb::this_tbb_thread::yield();
+}
+
+static void AssertDep(gentity_t *Ptr)
+{
+	if (Ptr)
+	{
+		auto Context = EntityContext::GetEntity();
+		if (Context)
+		{
+			if (!DepGraph::OnSameIsland(Context, Ptr))
+			{
+				// oops, sync needed – decide based on entity numbers (i.e. pointer addresses)
+				if (Ptr < Context)
+				{
+					// requested entity would be processed before context in the single-thread implementation, so wait for it
+					DEP_ASSERT(false, "STALL! Entity #%d is not on the same island as #%d!", Context->s.number, Ptr->s.number);
+					StallUntilEntityTouched(Ptr);
+				}
+#if DEP_SHOULD_ASSERT
+				else
+				{
+					// requested entity would be processed after context, we *should* be fine with accessing it (data races may still occur!), as single-thread impl. would simply use previous frame's data
+					G_Printf("[DepGraph] WARNING: RACE DANGER! Entity #%d is not on the same island as #%d!\n", Context->s.number, Ptr->s.number);
+				}
+#endif
+			}
+		}
+	}
+}
+
+// ===========================================================================
+
 EntPtr::EntPtr()
 	: Ptr(nullptr)
 {
@@ -224,19 +261,19 @@ EntPtr& EntPtr::operator=(gentity_t *entity)
 
 gentity_t& EntPtr::operator*() const
 {
-	AssertDep();
+	AssertDep(Ptr);
 	return *Ptr;
 }
 
 gentity_t *EntPtr::operator->() const
 {
-	AssertDep();
+	AssertDep(Ptr);
 	return Ptr;
 }
 
 EntPtr::operator gentity_t *() const
 {
-	AssertDep();
+	AssertDep(Ptr);
 	return Ptr;
 }
 
@@ -245,6 +282,7 @@ EntPtr& EntPtr::operator++()
 	AutoRemoveDep();
 	++Ptr;
 	AutoAddDep();
+	AssertDep(Ptr);
 	return *this;
 }
 
@@ -253,22 +291,8 @@ EntPtr EntPtr::operator++(int)
 	AutoRemoveDep();
 	auto RetVal = Ptr++;
 	AutoAddDep();
+	AssertDep(Ptr);
 	return RetVal;
-}
-
-void EntPtr::AssertDep() const
-{
-#if DEP_SHOULD_ASSERT
-	if (Ptr)
-	{
-		auto Context = EntityContext::GetEntity();
-		if (Context)
-		{
-			DEP_ASSERT(!DepGraph::Dirty, "Dependency cache dirty while trying to assert dependency of #%d on #%d!", Context->s.number, Ptr->s.number);
-			DEP_ASSERT(DepGraph::IsDependent(Context, Ptr), "Entity #%d has not declared dependency on #%d! Data race may occur!", Context->s.number, Ptr->s.number);
-		}
-	}
-#endif
 }
 
 void EntPtr::AutoAddDep() const
