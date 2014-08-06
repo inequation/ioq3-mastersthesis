@@ -104,6 +104,7 @@ static void ProximityMine_Explode( EntPtr mine ) {
 	// if the prox mine has a trigger free it
 	if (mine->activator) {
 		G_FreeEntity(mine->activator);
+		DepGraph::RemoveDep(mine, mine->activator);	// lgodlewski
 		mine->activator = NULL;
 	}
 }
@@ -192,10 +193,13 @@ static void ProximityMine_Activate( EntPtr ent ) {
 	trigger->r.contents = CONTENTS_TRIGGER;
 	trigger->touch = ProximityMine_Trigger;
 
+	DepGraph::AddDep(trigger, ent);	// lgodlewski
+
 	trap_LinkEntity (trigger);
 
 	// set pointer to trigger so the entity can be freed when the mine explodes
 	ent->activator = trigger;
+	DepGraph::AddDep(ent, ent->activator);	// lgodlewski
 }
 
 /*
@@ -245,6 +249,7 @@ static void ProximityMine_Player( EntPtr mine, EntPtr player ) {
 
 	player->client->ps.eFlags |= EF_TICKING;
 	player->activator = mine;
+	DepGraph::AddDep(player, player->activator);	// lgodlewski
 
 	mine->s.eFlags |= EF_NODRAW;
 	mine->r.svFlags |= SVF_NOCLIENT;
@@ -252,6 +257,7 @@ static void ProximityMine_Player( EntPtr mine, EntPtr player ) {
 	VectorClear( mine->s.pos.trDelta );
 
 	mine->enemy = player;
+	DepGraph::AddDep(mine, mine->enemy);	// lgodlewski
 	mine->think = ProximityMine_ExplodeOnPlayer;
 	if ( player->client->invulnerabilityTime > level.time ) {
 		mine->nextthink = level.time + 2 * 1000;
@@ -299,6 +305,7 @@ void G_MissileImpact( EntPtr ent, trace_t *trace ) {
 					ent->s.eFlags |= eFlags;
 				}
 				ent->target_ent = other;
+				DepGraph::AddDep(ent, ent->target_ent);	// lgodlewski
 				return;
 			}
 		}
@@ -541,6 +548,8 @@ EntPtr fire_plasma (EntPtr self, vec3_t start, vec3_t dir) {
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
 
+	DepGraph::AddDep(bolt, self);	// lgodlewski
+
 	bolt->s.pos.trType = TR_LINEAR;
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
 	VectorCopy( start, bolt->s.pos.trBase );
@@ -624,6 +633,8 @@ EntPtr fire_bfg (EntPtr self, vec3_t start, vec3_t dir) {
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
 
+	DepGraph::AddDep(bolt, self);	// lgodlewski
+
 	bolt->s.pos.trType = TR_LINEAR;
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
 	VectorCopy( start, bolt->s.pos.trBase );
@@ -664,6 +675,8 @@ EntPtr fire_rocket (EntPtr self, vec3_t start, vec3_t dir) {
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
 
+	DepGraph::AddDep(bolt, self);	// lgodlewski
+
 	bolt->s.pos.trType = TR_LINEAR;
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
 	VectorCopy( start, bolt->s.pos.trBase );
@@ -696,6 +709,8 @@ EntPtr fire_grapple (EntPtr self, vec3_t start, vec3_t dir) {
 	hook->clipmask = MASK_SHOT;
 	hook->parent = self;
 	hook->target_ent = NULL;
+
+	DepGraph::AddDep(hook, self);	// lgodlewski
 
 	hook->s.pos.trType = TR_LINEAR;
 	hook->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
@@ -738,6 +753,8 @@ EntPtr fire_nail( EntPtr self, vec3_t start, vec3_t forward, vec3_t right, vec3_
 	bolt->methodOfDeath = MOD_NAIL;
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
+
+	DepGraph::AddDep(bolt, self);	// lgodlewski
 
 	bolt->s.pos.trType = TR_LINEAR;
 	bolt->s.pos.trTime = level.time;
@@ -792,6 +809,8 @@ EntPtr fire_prox( EntPtr self, vec3_t start, vec3_t dir ) {
 	// count is used to check if the prox mine left the player bbox
 	// if count == 1 then the prox mine left the player bbox and can attack to it
 	bolt->count = 0;
+
+	DepGraph::AddDep(bolt, self);	// lgodlewski
 
 	//FIXME: we prolly wanna abuse another field
 	bolt->s.generic1 = self->client->sess.sessionTeam;

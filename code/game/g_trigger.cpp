@@ -44,6 +44,7 @@ void multi_wait( EntPtr ent ) {
 // so wait for the delay time before firing
 void multi_trigger( EntPtr ent, EntPtr activator ) {
 	ent->activator = activator;
+	DepGraph::AddDep(ent, ent->activator);	// lgodlewski
 	if ( ent->nextthink ) {
 		return;		// can't retrigger until the wait is over
 	}
@@ -167,7 +168,7 @@ void AimAtTarget( EntPtr self ) {
 	VectorScale ( origin, 0.5, origin );
 
 	ent = G_PickTarget( self->target );
-	if ( !ent ) {
+	if ( ent.isNull() ) {
 		G_FreeEntity( self );
 		return;
 	}
@@ -430,6 +431,7 @@ void func_timer_think( EntPtr self ) {
 
 void func_timer_use( EntPtr self, EntPtr other, EntPtr activator ) {
 	self->activator = activator;
+	DepGraph::AddDep(self, self->activator);	// lgodlewski
 
 	// if on, turn it off
 	if ( self->nextthink ) {

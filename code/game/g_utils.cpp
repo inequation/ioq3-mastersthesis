@@ -164,7 +164,7 @@ EntPtr G_Find (EntPtr from, int fieldofs, const char *match)
 {
 	char	*s;
 
-	if (!from)
+	if (from.isNull())
 		from = g_entities;
 	else
 		from++;
@@ -173,7 +173,7 @@ EntPtr G_Find (EntPtr from, int fieldofs, const char *match)
 	{
 		if (!from->inuse)
 			continue;
-		s = *(char **) ((byte *)(gentity_t *)from + fieldofs);
+		s = *(char **) ((byte *)(const gentity_t *)from + fieldofs);
 		if (!s)
 			continue;
 		if (!Q_stricmp (s, match))
@@ -239,7 +239,7 @@ match (string)self.target and call their .use function
 void G_UseTargets( EntPtr ent, EntPtr activator ) {
 	EntPtr		t;
 	
-	if ( !ent ) {
+	if ( ent.isNull() ) {
 		return;
 	}
 
@@ -475,6 +475,11 @@ void G_FreeEntity( EntPtr ed ) {
 	if ( ed->neverFree ) {
 		return;
 	}
+
+	tbb::mutex::scoped_lock lock(g_spawnMutex); // lgodlewski
+
+	// lgodlewski: clear all the deps this entity may have had on others, or vice versa
+	DepGraph::RemoveVertex(ed);
 
 	memset (ed, 0, sizeof(*ed));
 	ed->classname = "freed";

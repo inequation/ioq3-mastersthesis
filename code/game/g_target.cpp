@@ -99,6 +99,7 @@ void Use_Target_Delay( EntPtr ent, EntPtr other, EntPtr activator ) {
 	ent->nextthink = level.time + ( ent->wait + ent->random * crandom() ) * 1000;
 	ent->think = Think_Target_Delay;
 	ent->activator = activator;
+	DepGraph::AddDep(ent, ent->activator);	// lgodlewski
 }
 
 void SP_target_delay( EntPtr ent ) {
@@ -297,6 +298,7 @@ void target_laser_off (EntPtr self)
 void target_laser_use (EntPtr self, EntPtr other, EntPtr activator)
 {
 	self->activator = activator;
+	DepGraph::AddDep(self, self->activator);	// lgodlewski
 	if ( self->nextthink > 0 )
 		target_laser_off (self);
 	else
@@ -315,6 +317,7 @@ void target_laser_start (EntPtr self)
 			G_Printf ("%s at %s: %s is a bad target\n", self->classname, vtos(self->s.origin), self->target);
 		}
 		self->enemy = ent;
+		DepGraph::AddDep(self, self->enemy);	// lgodlewski
 	} else {
 		G_SetMovedir (self->s.angles, self->movedir);
 	}
@@ -443,6 +446,7 @@ static void target_location_linkup(EntPtr ent)
 			trap_SetConfigstring( CS_LOCATIONS + n, ent->message );
 			n++;
 			ent->nextTrain = level.locationHead;
+			DepGraph::AddDep(ent, ent->nextTrain);	// lgodlewski
 			level.locationHead = ent;
 		}
 	}

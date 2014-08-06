@@ -1119,6 +1119,7 @@ static void Cmd_VoiceTaunt_f( EntPtr ent ) {
 		if (!(ent->r.svFlags & SVF_BOT)) {
 			G_Voice( ent, ent,        SAY_TELL, VOICECHAT_DEATHINSULT, qfalse );
 		}
+		DepGraph::RemoveDep(ent, ent->enemy);	// lgodlewski
 		ent->enemy = NULL;
 		return;
 	}

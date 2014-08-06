@@ -1125,6 +1125,7 @@ void G_StartKamikaze( EntPtr ent ) {
 	if (ent->client) {
 		//
 		explosion->activator = ent;
+		DepGraph::AddDep(explosion, explosion->activator);	// lgodlewski
 		//
 		ent->s.eFlags &= ~EF_KAMIKAZE;
 		// nuke the guy that used it
@@ -1133,9 +1134,11 @@ void G_StartKamikaze( EntPtr ent ) {
 	else {
 		if ( !strcmp(ent->activator->classname, "bodyque") ) {
 			explosion->activator = &g_entities[ent->activator->r.ownerNum];
+			DepGraph::AddDep(explosion, explosion->activator);	// lgodlewski
 		}
 		else {
 			explosion->activator = ent->activator;
+			DepGraph::AddDep(explosion, explosion->activator);	// lgodlewski
 		}
 	}
 

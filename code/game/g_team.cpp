@@ -1389,6 +1389,7 @@ void SP_team_redobelisk( EntPtr ent ) {
 	if ( g_gametype.integer == GT_OBELISK ) {
 		obelisk = SpawnObelisk( ent->s.origin, TEAM_RED, ent->spawnflags );
 		obelisk->activator = ent;
+		DepGraph::AddDep(obelisk, obelisk->activator);	// lgodlewski
 		// initial obelisk health value
 		ent->s.modelindex2 = 0xff;
 		ent->s.frame = 0;
@@ -1396,6 +1397,7 @@ void SP_team_redobelisk( EntPtr ent ) {
 	if ( g_gametype.integer == GT_HARVESTER ) {
 		obelisk = SpawnObelisk( ent->s.origin, TEAM_RED, ent->spawnflags );
 		obelisk->activator = ent;
+		DepGraph::AddDep(obelisk, obelisk->activator);	// lgodlewski
 	}
 	ent->s.modelindex = TEAM_RED;
 	trap_LinkEntity(ent);
@@ -1414,6 +1416,7 @@ void SP_team_blueobelisk( EntPtr ent ) {
 	if ( g_gametype.integer == GT_OBELISK ) {
 		obelisk = SpawnObelisk( ent->s.origin, TEAM_BLUE, ent->spawnflags );
 		obelisk->activator = ent;
+		DepGraph::AddDep(obelisk, obelisk->activator);	// lgodlewski
 		// initial obelisk health value
 		ent->s.modelindex2 = 0xff;
 		ent->s.frame = 0;
@@ -1421,6 +1424,7 @@ void SP_team_blueobelisk( EntPtr ent ) {
 	if ( g_gametype.integer == GT_HARVESTER ) {
 		obelisk = SpawnObelisk( ent->s.origin, TEAM_BLUE, ent->spawnflags );
 		obelisk->activator = ent;
+		DepGraph::AddDep(obelisk, obelisk->activator);	// lgodlewski
 	}
 	ent->s.modelindex = TEAM_BLUE;
 	trap_LinkEntity(ent);

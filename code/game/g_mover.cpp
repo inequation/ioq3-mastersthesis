@@ -330,6 +330,7 @@ qboolean G_MoverPush( EntPtr pusher, vec3_t move, vec3_t amove, EntPtr *obstacle
 						G_ExplodeMissile(check);
 						if (check->activator) {
 							G_FreeEntity(check->activator);
+							DepGraph::RemoveDep(check, check->activator);	// lgodlewski
 							check->activator = NULL;
 						}
 						//G_Printf("prox mine explodes\n");
@@ -344,6 +345,7 @@ qboolean G_MoverPush( EntPtr pusher, vec3_t move, vec3_t amove, EntPtr *obstacle
 						G_ExplodeMissile(check);
 						if (check->activator) {
 							G_FreeEntity(check->activator);
+							DepGraph::RemoveDep(check, check->activator);	// lgodlewski
 							check->activator = NULL;
 						}
 						//G_Printf("prox mine explodes\n");
@@ -583,7 +585,6 @@ Reached_BinaryMover
 ================
 */
 void Reached_BinaryMover( EntPtr ent ) {
-
 	// stop the looping sound
 	ent->s.loopSound = ent->soundLoop;
 
@@ -640,6 +641,7 @@ void Use_BinaryMover( EntPtr ent, EntPtr other, EntPtr activator ) {
 	}
 
 	ent->activator = activator;
+	DepGraph::AddDep(ent, ent->activator);	// lgodlewski
 
 	if ( ent->moverState == MOVER_POS1 ) {
 		// start moving 50 msec later, becase if this was player
@@ -1286,6 +1288,7 @@ void Reached_Train( EntPtr ent ) {
 
 	// set the new trajectory
 	ent->nextTrain = next->nextTrain;
+	DepGraph::AddDep(ent, ent->nextTrain);	// lgodlewski
 	VectorCopy( next->s.origin, ent->pos1 );
 	VectorCopy( next->nextTrain->s.origin, ent->pos2 );
 
@@ -1356,6 +1359,7 @@ void Think_SetupTrainTargets( EntPtr ent ) {
 			vtos(ent->r.absmin) );
 		return;
 	}
+	DepGraph::AddDep(ent, ent->nextTrain);	// lgodlewski
 
 	start = NULL;
 	for ( path = ent->nextTrain ; path != start ; path = next ) {
@@ -1383,6 +1387,7 @@ void Think_SetupTrainTargets( EntPtr ent ) {
 		} while ( strcmp( next->classname, "path_corner" ) );
 
 		path->nextTrain = next;
+		DepGraph::AddDep(path, path->nextTrain);	// lgodlewski
 	}
 
 	// start the train moving from the first corner

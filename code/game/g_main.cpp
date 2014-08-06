@@ -358,9 +358,10 @@ void G_FindTeams( void ) {
 		if (e->flags & FL_TEAMSLAVE)
 			continue;
 		e->teammaster = e;
+		DepGraph::AddDep(e, e->teammaster);	// lgodlewski
 		c++;
 		c2++;
-		for (j=i+1, e2=e+1 ; j < level.num_entities ; j++,e2++)
+		for (j=i+1, e2=(e+1) ; j < level.num_entities ; j++,e2++)
 		{
 			if (!e2->inuse)
 				continue;
@@ -372,8 +373,11 @@ void G_FindTeams( void ) {
 			{
 				c2++;
 				e2->teamchain = e->teamchain;
+				DepGraph::AddDep(e2, e2->teamchain);	// lgodlewski
 				e->teamchain = e2;
+				DepGraph::AddDep(e, e->teamchain);	// lgodlewski
 				e2->teammaster = e;
+				DepGraph::AddDep(e2, e2->teammaster);	// lgodlewski
 				e2->flags |= FL_TEAMSLAVE;
 
 				// make sure that targets only point at the master

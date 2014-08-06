@@ -339,6 +339,7 @@ void Kamikaze_DeathTimer( EntPtr self ) {
 	ent->nextthink = level.time + 5 * 1000;
 
 	ent->activator = self;
+	DepGraph::AddDep(ent, ent->activator);	// lgodlewski
 }
 
 #endif
@@ -493,12 +494,14 @@ void player_die( EntPtr self, EntPtr inflictor, EntPtr attacker, int damage, int
 
 	// broadcast the death event to everyone
 	ent = G_TempEntity( self->r.currentOrigin, EV_OBITUARY );
+	DepGraph::AddDep(ent, self);
 	ent->s.eventParm = meansOfDeath;
 	ent->s.otherEntityNum = self->s.number;
 	ent->s.otherEntityNum2 = killer;
 	ent->r.svFlags = SVF_BROADCAST;	// send to everyone
 
 	self->enemy = attacker;
+	DepGraph::AddDep(self, self->enemy);	// lgodlewski
 
 	self->client->ps.persistant[PERS_KILLED]++;
 
@@ -1038,6 +1041,7 @@ void G_Damage( EntPtr targ, EntPtr inflictor, EntPtr attacker,
 				targ->health = -999;
 
 			targ->enemy = attacker;
+			DepGraph::AddDep(targ, targ->enemy);	// lgodlewski
 			targ->die (targ, inflictor, attacker, take, mod);
 			return;
 		} else if ( targ->pain ) {

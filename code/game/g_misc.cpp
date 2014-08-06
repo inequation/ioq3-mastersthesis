@@ -288,6 +288,7 @@ void Use_Shooter( EntPtr ent, EntPtr other, EntPtr activator ) {
 
 static void InitShooter_Finish( EntPtr ent ) {
 	ent->enemy = G_PickTarget( ent->target );
+	DepGraph::AddDep(ent, ent->enemy);	// lgodlewski
 	ent->think = 0;
 	ent->nextthink = 0;
 }
