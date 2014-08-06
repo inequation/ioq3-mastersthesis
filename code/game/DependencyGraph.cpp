@@ -105,7 +105,7 @@ namespace DepGraph
 
 		if (Dirty)
 		{
-			DEP_ASSERT(0, "Dependency graph is dirty! Traversing graph from #%d to #%d, this will be slower!", Depends->s.number, On->s.number);
+			G_Printf("[DepGraph] WARNING: Dependency graph is dirty! Traversing graph from #%d to #%d, this will be slower!\n", Depends->s.number, On->s.number);
 
 #ifdef __EXCEPTIONS
 			class FoundException
@@ -150,10 +150,9 @@ namespace DepGraph
 		else
 		{
 			auto Island = Depends->island;
-			SameIsland = std::find(Island->begin(), Island->end(), On) != Island->end();
+			SameIsland = std::binary_search(Island->begin(), Island->end(), On);
 		}
 
-		DEP_ASSERT(SameIsland, "Entity #%d is on a different island than the dependency #%d!", Depends->s.number, On->s.number);
 		return SameIsland;
 	}
 
