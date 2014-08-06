@@ -139,6 +139,9 @@ namespace DepGraph
 #ifdef __EXCEPTIONS
 			try {
 #endif
+			// make sure the graph includes the depending vertex
+			while (num_vertices(Graph) <= Depends->s.number)
+				add_vertex(Graph);
 			breadth_first_search(Graph, vertex(Depends->s.number, Graph), visitor(Pathfinder(On->s.number, SameIsland)));
 #ifdef __EXCEPTIONS
 			} catch (FoundException Ex) {
