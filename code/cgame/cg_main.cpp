@@ -201,6 +201,8 @@ vmCvar_t	cg_obeliskRespawnDelay;
 // lgodlewski
 vmCvar_t	cg_cpumeter;
 vmCvar_t	g_timeSpent[BOTAI_START_FRAME + 1];
+vmCvar_t	g_numOnePlusPopulatedIslands;
+vmCvar_t	g_numOnePopulatedIslands;
 
 typedef struct {
 	vmCvar_t	*vmCvar;
@@ -361,6 +363,8 @@ void CG_RegisterCvars( void ) {
 		s = va("g_timeSpent%d", i);
 		trap_Cvar_Register(&g_timeSpent[i], s, "0", 0);
 	}
+	trap_Cvar_Register(&g_numOnePlusPopulatedIslands, "g_numOnePlusPopulatedIslands", "0", 0);
+	trap_Cvar_Register(&g_numOnePopulatedIslands, "g_numOnePopulatedIslands", "0", 0);
 }
 
 /*																																			

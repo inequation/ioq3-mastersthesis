@@ -30,6 +30,8 @@ using namespace boost;
 #endif
 
 tbb::enumerable_thread_specific<gentity_t *> EntityContext::Context;
+size_t gNumOnePlusPopulatedIslands = 0;
+size_t gNumOnePopulatedIslands = 0;
 
 // ===========================================================================
 
@@ -188,9 +190,13 @@ namespace DepGraph
 			level.gentities[i].island = &level.islands[IslandMap[i]];
 			level.gentities[i].island->push_back(&level.gentities[i]);
 		}
+		gNumOnePlusPopulatedIslands = i;
+		gNumOnePopulatedIslands = 0;
 		for (; i < MAX_GENTITIES; ++i)
 		{
 			level.gentities[i].island = &level.islands[NumIslands++];
+			if (level.gentities[i].inuse)
+				++gNumOnePopulatedIslands;
 		}
 		level.num_islands = i;
 

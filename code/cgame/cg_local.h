@@ -1198,6 +1198,8 @@ extern	vmCvar_t		cg_obeliskRespawnDelay;
 // lgodlewski: CPU load graph
 extern	vmCvar_t		cg_cpumeter;
 extern	vmCvar_t		g_timeSpent[BOTAI_START_FRAME + 1];
+extern	vmCvar_t		g_numOnePlusPopulatedIslands;
+extern	vmCvar_t		g_numOnePopulatedIslands;
 
 //
 // cg_main.c

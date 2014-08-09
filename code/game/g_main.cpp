@@ -294,6 +294,12 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 		g_clientThinkTasks->wait();
 
 		G_RunFrame( arg0 );
+
+		// lgodlewski: store island stats into cvars
+		extern size_t gNumOnePlusPopulatedIslands;
+		extern size_t gNumOnePopulatedIslands;
+		trap_Cvar_Set("g_numOnePlusPopulatedIslands", va("%zu", gNumOnePlusPopulatedIslands));
+		trap_Cvar_Set("g_numOnePopulatedIslands", va("%zu", gNumOnePopulatedIslands));
 		return 0;
 	case GAME_CONSOLE_COMMAND:
 		return ConsoleCommand();

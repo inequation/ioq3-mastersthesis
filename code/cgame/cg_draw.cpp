@@ -1751,10 +1751,16 @@ typedef struct {
 } commandTime_t;
 
 typedef struct {
+	int					numOnePlusIslands[CPU_SAMPLES];
+	int					numOneIslands[CPU_SAMPLES];
+} islands_t;
+
+typedef struct {
 	cpucore_t			core[MAX_CPU_CORES + 1];	// core[0] is actually the total for all CPUs on the system
 	int					numCores;
 	int					sample;
 	commandTime_t		timeSpent[BOTAI_START_FRAME + 2];	// timeSpent[0] is actually the total for all commands
+	islands_t			islands;
 } cpumeter_t;
 
 cpumeter_t cpumeter;
@@ -1795,6 +1801,12 @@ static void CG_SampleCPUUsage( void ) {
 	float usage;
 	static	int	previous;
 	int		t, frameTime;
+
+	// sample island counts
+	trap_Cvar_Update(&g_numOnePlusPopulatedIslands);
+	trap_Cvar_Update(&g_numOnePopulatedIslands);
+	cpumeter.islands.numOnePlusIslands[cpumeter.sample] = g_numOnePlusPopulatedIslands.integer;
+	cpumeter.islands.numOneIslands[cpumeter.sample] = g_numOnePopulatedIslands.integer;
 
 	// sample frame times spent in game commands
 	int total = 0;
@@ -2016,6 +2028,70 @@ static void CG_DrawCPUMeter( void ) {
 			// increase over CPU_SAMPLING_PERIOD intervals
 			s = (cpumeter.sample - 1) & (CPU_SAMPLES - 1);
 			str = va("^1%4dus", cpumeter.timeSpent[i].time[s] / CPU_SAMPLING_PERIOD);
+			CG_DrawSmallString( x, y + ah / 2, str, 1.0 );
+		}
+		y -= 48 + 1;
+	}
+	if (cg_cpumeter.integer & 8)
+	{
+		for (i = 0; i < 2; ++i)
+		{
+			x = 640 - 48 - i * (48 + 1);
+
+			trap_R_SetColor( NULL );
+			CG_DrawPic( x, y, 48, 48, cgs.media.lagometerShader );
+
+			ax = x;
+			ay = y;
+			aw = 48;
+			ah = 48;
+			CG_AdjustFrom640( &ax, &ay, &aw, &ah );
+
+			color = -1;
+			range = ah / 1;
+			mid = ay + range;
+
+			vscale = range / 1024;
+			iaverage = 0;
+
+			// draw the frame time
+			for ( a = 0 ; a < aw ; a++ ) {
+				s = (cpumeter.sample + 1 + a) & (CPU_SAMPLES - 1);
+				v = i == 0 ? cpumeter.islands.numOnePlusIslands[s] : cpumeter.islands.numOneIslands[s];
+				// pre-divide to avoid integer overflows
+				iaverage += (i == 0 ? cpumeter.islands.numOnePlusIslands[s] : cpumeter.islands.numOneIslands[s]) / (int)aw;
+				v *= vscale;
+
+				if ( i == 0 ) {
+					if ( color != 2 ) {
+						color = 2;
+						trap_R_SetColor( g_color_table[ColorIndex(COLOR_WHITE)] );
+					}
+				} else {
+					if ( color != 1 ) {
+						color = 1;
+						trap_R_SetColor( g_color_table[ColorIndex(COLOR_YELLOW)] );
+					}
+				}
+				if ( v > range ) {
+					v = range;
+				}
+				trap_R_DrawStretchPic ( ax + aw - a, mid - v, 1, v, 0, 0, 0, 0, cgs.media.whiteShader );
+			}
+
+			trap_R_SetColor( NULL );
+
+			// draw island type
+			str = i == 0 ? (char *)"^3Commun" : (char *)"^3Loners";
+			CG_DrawSmallString( x, y, str, 1.0 );
+
+			// draw average number for the last aw frames
+			str = va("^2%4d", iaverage);
+			CG_DrawSmallString( x, y + ah / 4, str, 1.0 );
+
+			// draw last frame's island count
+			s = cpumeter.sample & (CPU_SAMPLES - 1);
+			str = va("^1%4d", (i == 0 ? cpumeter.islands.numOnePlusIslands[s] : cpumeter.islands.numOneIslands[s]));
 			CG_DrawSmallString( x, y + ah / 2, str, 1.0 );
 		}
 		y -= 48 + 1;
