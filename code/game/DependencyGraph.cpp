@@ -10,12 +10,16 @@
 
 using namespace boost;
 
-#define DEP_SHOULD_ASSERT		!NDEBUG
-#define DEP_ASSERTS_ARE_FATAL	0
+#define DEP_SHOULD_ASSERT				!NDEBUG
+#define DEP_ASSERTS_ARE_FATAL			0
+
+// tricky – when cache is dirty (i.e. deps changed) and we traverse the graph to check if on same island,
+// the entity may have been placed in queue on another island and thread, thus it's better to keep this off
+#define DEP_TRAVERSE_GRAPH_WHEN_DIRTY	0
 
 // these two are for debugging purposes only – they make everything SLOW!
-#define DEP_AUTO_DEPEND			0
-#define DEP_AUTO_CACHE_REBUILD	0
+#define DEP_AUTO_DEPEND					0
+#define DEP_AUTO_CACHE_REBUILD			0
 
 #if DEP_SHOULD_ASSERT
 	#if DEP_ASSERTS_ARE_FATAL
@@ -103,9 +107,10 @@ namespace DepGraph
 			RebuildIslands();
 #endif
 
+#if DEP_TRAVERSE_GRAPH_WHEN_DIRTY
 		if (Dirty)
 		{
-			G_Printf("[DepGraph] WARNING: Dependency graph is dirty! Traversing graph from #%d to #%d, this will be slower!\n", Depends->s.number, On->s.number);
+			G_Printf("[DepGraph] WARNING: Island cache is dirty! Traversing graph from #%d to #%d, this will be slower!\n", Depends->s.number, On->s.number);
 
 #ifdef __EXCEPTIONS
 			class FoundException
@@ -151,6 +156,10 @@ namespace DepGraph
 #endif
 		}
 		else
+#else
+		if (Dirty)
+			G_Printf("[DepGraph] WARNING: Island cache is dirty! Entities' #%d and #%d co-location may change next frame!\n", Depends->s.number, On->s.number);
+#endif
 		{
 			auto Island = Depends->island;
 			SameIsland = std::binary_search(Island->begin(), Island->end(), On);
@@ -230,18 +239,21 @@ static void AssertDep(gentity_t *Ptr)
 
 EntPtr::EntPtr()
 	: Ptr(nullptr)
+	, LastCachedFrame(-1)
 {
 
 }
 
 EntPtr::EntPtr(gentity_t *entity)
 	: Ptr(entity)
+	, LastCachedFrame(-1)
 {
 	AutoAddDep();
 }
 
 EntPtr::EntPtr(const EntPtr& Other)
 	: Ptr(Other.Ptr)
+	, LastCachedFrame(Other.LastCachedFrame)
 {
 	AutoAddDep();
 }
@@ -251,29 +263,39 @@ EntPtr::~EntPtr()
 	AutoRemoveDep();
 }
 
+EntPtr& EntPtr::operator=(const EntPtr& Other)
+{
+	AutoRemoveDep();
+	Ptr = Other.Ptr;
+	LastCachedFrame = Other.LastCachedFrame;
+	AutoAddDep();
+	return *this;
+}
+
 EntPtr& EntPtr::operator=(gentity_t *entity)
 {
 	AutoRemoveDep();
 	Ptr = entity;
+	LastCachedFrame = -1;
 	AutoAddDep();
 	return *this;
 }
 
 gentity_t& EntPtr::operator*() const
 {
-	AssertDep(Ptr);
+	CachedAssertDep();
 	return *Ptr;
 }
 
 gentity_t *EntPtr::operator->() const
 {
-	AssertDep(Ptr);
+	CachedAssertDep();
 	return Ptr;
 }
 
 EntPtr::operator gentity_t *() const
 {
-	AssertDep(Ptr);
+	CachedAssertDep();
 	return Ptr;
 }
 
@@ -281,8 +303,9 @@ EntPtr& EntPtr::operator++()
 {
 	AutoRemoveDep();
 	++Ptr;
+	LastCachedFrame = -1;
 	AutoAddDep();
-	AssertDep(Ptr);
+	CachedAssertDep();
 	return *this;
 }
 
@@ -290,8 +313,9 @@ EntPtr EntPtr::operator++(int)
 {
 	AutoRemoveDep();
 	auto RetVal = Ptr++;
+	LastCachedFrame = -1;
 	AutoAddDep();
-	AssertDep(Ptr);
+	CachedAssertDep();
 	return RetVal;
 }
 
@@ -317,4 +341,14 @@ void EntPtr::AutoRemoveDep() const
 			DepGraph::RemoveDep(Context, Ptr);
 	}
 #endif
+}
+
+void EntPtr::CachedAssertDep() const
+{
+	// if we've already asserted dependency on this frame, do nothing
+	if (LastCachedFrame != level.framenum)
+	{
+		LastCachedFrame = level.framenum;
+		AssertDep(Ptr);
+	}
 }

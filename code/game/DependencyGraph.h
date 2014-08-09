@@ -11,6 +11,7 @@ struct EntPtr
 	EntPtr(const EntPtr& Other);
 	~EntPtr();
 
+	EntPtr& operator=(const EntPtr& Other);
 	EntPtr& operator=(gentity_t *entity);
 
 	gentity_t& operator*() const;
@@ -35,9 +36,11 @@ struct EntPtr
 
 private:
 	gentity_t	*Ptr;
+	mutable int	LastCachedFrame;
 
 	void AutoAddDep() const;
 	void AutoRemoveDep() const;
+	void CachedAssertDep() const;
 
 	friend struct ScopedEntityContext;
 };
