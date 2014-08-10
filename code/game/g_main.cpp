@@ -1864,84 +1864,81 @@ void G_RunFrame( int levelTime ) {
 	//
 	// go through all allocated objects
 	//
-	tbb::parallel_for(tbb::blocked_range<int>(0, level.num_islands),
-		[=](const tbb::blocked_range<int>& r) {
-			for (int i=r.begin() ; i!=r.end() ; ++i) {
-				auto island = &level.islands[i];
-				for (auto it = island->begin() ; it != island->end() ; ++it) {
-					EntPtr ent = *it;
+	ProcessIslandsTask::Run(
+		[=](EntityIsland *island) {
+			for (auto it = island->begin() ; it != island->end() ; ++it) {
+				EntPtr ent = *it;
 
-					// lgodlewski: helper struct for recording frame touches
-					struct Toucher {
-						Toucher(EntPtr Ent)
-							: Ptr(Ent.GetPtrNoCheck())
-						{}
-						~Toucher()
-						{Ptr->frameTouched = level.framenum;}
-					private:
-						gentity_t *Ptr;
-					} toucher(ent);
+				// lgodlewski: helper struct for recording frame touches
+				struct Toucher {
+					Toucher(EntPtr Ent)
+						: Ptr(Ent.GetPtrNoCheck())
+					{}
+					~Toucher()
+					{Ptr->frameTouched = level.framenum;}
+				private:
+					gentity_t *Ptr;
+				} toucher(ent);
 
-					if ( !ent->inuse ) {
-						continue;
-					}
-
-					// lgodlewski
-					ScopedEntityContext context(ent);
-
-					// clear events that are too old
-					if ( level.time - ent->eventTime > EVENT_VALID_MSEC ) {
-						if ( ent->s.event ) {
-							ent->s.event = 0;	// &= EV_EVENT_BITS;
-							if ( ent->client ) {
-								ent->client->ps.externalEvent = 0;
-								// predicted events should never be set to zero
-								//ent->client->ps.events[0] = 0;
-								//ent->client->ps.events[1] = 0;
-							}
-						}
-						if ( ent->freeAfterEvent ) {
-							// tempEntities or dropped items completely go away after their event
-							G_FreeEntity( ent );
-							continue;
-						} else if ( ent->unlinkAfterEvent ) {
-							// items that will respawn will hide themselves after their pickup event
-							ent->unlinkAfterEvent = qfalse;
-							trap_UnlinkEntity( ent );
-						}
-					}
-
-					// temporary entities don't think
-					if ( ent->freeAfterEvent ) {
-						continue;
-					}
-
-					if ( !ent->r.linked && ent->neverFree ) {
-						continue;
-					}
-
-					if ( ent->s.eType == ET_MISSILE ) {
-						G_RunMissile( ent );
-						continue;
-					}
-
-					if ( ent->s.eType == ET_ITEM || ent->physicsObject ) {
-						G_RunItem( ent );
-						continue;
-					}
-
-					if ( ent->s.eType == ET_MOVER ) {
-						G_RunMover( ent );
-						continue;
-					}
-
-					if ( i < MAX_CLIENTS ) {
-						G_RunClient( ent );
-						continue;
-					}
-
-					G_RunThink( ent );
+				if ( !ent->inuse ) {
+					continue;
 				}
+
+				// lgodlewski
+				ScopedEntityContext context(ent);
+
+				// clear events that are too old
+				if ( level.time - ent->eventTime > EVENT_VALID_MSEC ) {
+					if ( ent->s.event ) {
+						ent->s.event = 0;	// &= EV_EVENT_BITS;
+						if ( ent->client ) {
+							ent->client->ps.externalEvent = 0;
+							// predicted events should never be set to zero
+							//ent->client->ps.events[0] = 0;
+							//ent->client->ps.events[1] = 0;
+						}
+					}
+					if ( ent->freeAfterEvent ) {
+						// tempEntities or dropped items completely go away after their event
+						G_FreeEntity( ent );
+						continue;
+					} else if ( ent->unlinkAfterEvent ) {
+						// items that will respawn will hide themselves after their pickup event
+						ent->unlinkAfterEvent = qfalse;
+						trap_UnlinkEntity( ent );
+					}
+				}
+
+				// temporary entities don't think
+				if ( ent->freeAfterEvent ) {
+					continue;
+				}
+
+				if ( !ent->r.linked && ent->neverFree ) {
+					continue;
+				}
+
+				if ( ent->s.eType == ET_MISSILE ) {
+					G_RunMissile( ent );
+					continue;
+				}
+
+				if ( ent->s.eType == ET_ITEM || ent->physicsObject ) {
+					G_RunItem( ent );
+					continue;
+				}
+
+				if ( ent->s.eType == ET_MOVER ) {
+					G_RunMover( ent );
+					continue;
+				}
+
+				if ( ent->s.number < MAX_CLIENTS ) {
+					G_RunClient( ent );
+					continue;
+				}
+
+				G_RunThink( ent );
 			}
 		});
 

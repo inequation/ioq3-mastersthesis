@@ -358,3 +358,39 @@ void EntPtr::CachedAssertDep() const
 		AssertDep(Ptr);
 	}
 }
+
+tbb::task *ProcessIslandsTask::execute()
+{
+	class PerIslandTask : public tbb::task
+	{
+	public:
+		PerIslandTask(EntityIsland *InIsland)
+			: Island(InIsland)
+		{}
+
+		tbb::task *execute()
+		{
+			((ProcessIslandsTask *)parent())->Func(Island);
+			return nullptr;
+		}
+	private:
+		EntityIsland *Island;
+	};
+
+	set_ref_count(level.num_islands + 1);
+	for (int i = 0; i < level.num_islands; ++i)
+	{
+		auto& task = *new(allocate_child()) PerIslandTask(&level.islands[i]);
+		if (i < level.num_islands - 1)
+			spawn(task);
+		else
+			spawn_and_wait_for_all(task);
+	}
+	return nullptr;
+}
+
+void ProcessIslandsTask::Run(PerIslandFunc PerIsland)
+{
+	auto& task = *new(tbb::task::allocate_root()) ProcessIslandsTask(PerIsland);
+	tbb::task::spawn_root_and_wait(task);
+}

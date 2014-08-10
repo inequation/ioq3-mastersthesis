@@ -1,7 +1,9 @@
 #pragma once
 
+#include <tbb/task.h>
 #include <tbb/enumerable_thread_specific.h>
 #include <vector>
+#include <functional>
 
 // basic, dependency-enforcing entity smart pointer
 struct EntPtr
@@ -80,4 +82,22 @@ struct ScopedEntityContext
 
 private:
 	gentity_t	*PrevPtr;
+};
+
+// ===========================================================================
+
+class ProcessIslandsTask : public tbb::task
+{
+public:
+	typedef std::function<void(EntityIsland *)> PerIslandFunc;
+
+	ProcessIslandsTask(PerIslandFunc PerIsland)
+		: Func(PerIsland)
+	{}
+
+	tbb::task *execute();
+
+	static void Run(PerIslandFunc PerIsland);
+
+	PerIslandFunc Func;
 };
