@@ -202,42 +202,64 @@ namespace DepGraph
 
 		Dirty = false;
 	}
-}
 
-// ===========================================================================
-
-static void StallUntilEntityTouched(gentity_t *ent)
-{
-	// FIXME: does this really need to be a busy wait?
-	while (ent->frameTouched != level.framenum)
-		tbb::this_tbb_thread::yield();
-}
-
-static void AssertDep(gentity_t *Ptr)
-{
-	if (Ptr)
+	static void StallUntilEntityTouched(const gentity_t *ent)
 	{
-		auto Context = EntityContext::GetEntity();
-		if (Context)
+		// FIXME: does this really need to be a busy wait?
+		while (ent->frameTouched != level.framenum)
+			tbb::this_tbb_thread::yield();
+	}
+
+	static void AssertDep(const gentity_t *Ptr)
+	{
+		if (Ptr)
 		{
-			if (!DepGraph::OnSameIsland(Context, Ptr))
+			auto Context = EntityContext::GetEntity();
+			if (Context)
 			{
-				// oops, sync needed – decide based on entity numbers (i.e. pointer addresses)
-				if (Ptr < Context)
+				if (!OnSameIsland(Context, Ptr))
 				{
-					// requested entity would be processed before context in the single-thread implementation, so wait for it
-					DEP_ASSERT(false, "STALL! Entity #%d is not on the same island as #%d!", Context->s.number, Ptr->s.number);
-					StallUntilEntityTouched(Ptr);
+					// oops, sync needed – decide based on entity numbers (i.e. pointer addresses)
+					if (Ptr < Context)
+					{
+						// requested entity would be processed before context in the single-thread implementation, so wait for it
+						DEP_ASSERT(false, "STALL! Entity #%d is not on the same island as #%d!", Context->s.number, Ptr->s.number);
+						StallUntilEntityTouched(Ptr);
+					}
+	#if DEP_SHOULD_ASSERT
+					else
+					{
+						// requested entity would be processed after context, we *should* be fine with accessing it (data races may still occur!), as single-thread impl. would simply use previous frame's data
+						G_Printf("[DepGraph] WARNING: RACE DANGER! Entity #%d is not on the same island as #%d!\n", Context->s.number, Ptr->s.number);
+					}
+	#endif
 				}
-#if DEP_SHOULD_ASSERT
-				else
-				{
-					// requested entity would be processed after context, we *should* be fine with accessing it (data races may still occur!), as single-thread impl. would simply use previous frame's data
-					G_Printf("[DepGraph] WARNING: RACE DANGER! Entity #%d is not on the same island as #%d!\n", Context->s.number, Ptr->s.number);
-				}
-#endif
 			}
 		}
+	}
+
+	void AutoAddDep(const gentity_t *Ptr)
+	{
+	#if DEP_AUTO_DEPEND
+		if (Ptr)
+		{
+			auto Context = EntityContext::GetEntity();
+			if (Context)
+				AddDep(Context, Ptr);
+		}
+	#endif
+	}
+
+	void AutoRemoveDep(const gentity_t *Ptr)
+	{
+	#if DEP_AUTO_DEPEND
+		if (Ptr)
+		{
+			auto Context = EntityContext::GetEntity();
+			if (Context)
+				RemoveDep(Context, Ptr);
+		}
+	#endif
 	}
 }
 
@@ -254,36 +276,52 @@ EntPtr::EntPtr(gentity_t *entity)
 	: Ptr(entity)
 	, LastCachedFrame(-1)
 {
-	AutoAddDep();
+	DepGraph::AutoAddDep(Ptr);
 }
 
 EntPtr::EntPtr(const EntPtr& Other)
 	: Ptr(Other.Ptr)
 	, LastCachedFrame(Other.LastCachedFrame)
 {
-	AutoAddDep();
+	DepGraph::AutoAddDep(Ptr);
+}
+
+EntPtr::EntPtr(const WeakEntPtr& Other)
+	: Ptr((gentity_t *)Other.Ptr)
+	, LastCachedFrame(-1)
+{
+	DepGraph::AutoAddDep(Ptr);
 }
 
 EntPtr::~EntPtr()
 {
-	AutoRemoveDep();
+	DepGraph::AutoRemoveDep(Ptr);
 }
 
 EntPtr& EntPtr::operator=(const EntPtr& Other)
 {
-	AutoRemoveDep();
+	DepGraph::AutoRemoveDep(Ptr);
 	Ptr = Other.Ptr;
 	LastCachedFrame = Other.LastCachedFrame;
-	AutoAddDep();
+	DepGraph::AutoAddDep(Ptr);
+	return *this;
+}
+
+EntPtr& EntPtr::operator=(const WeakEntPtr& Other)
+{
+	DepGraph::AutoRemoveDep(Ptr);
+	Ptr = (gentity_t *)Other.Ptr;
+	LastCachedFrame = -1;
+	DepGraph::AutoAddDep(Ptr);
 	return *this;
 }
 
 EntPtr& EntPtr::operator=(gentity_t *entity)
 {
-	AutoRemoveDep();
+	DepGraph::AutoRemoveDep(Ptr);
 	Ptr = entity;
 	LastCachedFrame = -1;
-	AutoAddDep();
+	DepGraph::AutoAddDep(Ptr);
 	return *this;
 }
 
@@ -307,46 +345,22 @@ EntPtr::operator gentity_t *() const
 
 EntPtr& EntPtr::operator++()
 {
-	AutoRemoveDep();
+	DepGraph::AutoRemoveDep(Ptr);
 	++Ptr;
 	LastCachedFrame = -1;
-	AutoAddDep();
+	DepGraph::AutoAddDep(Ptr);
 	CachedAssertDep();
 	return *this;
 }
 
 EntPtr EntPtr::operator++(int)
 {
-	AutoRemoveDep();
+	DepGraph::AutoRemoveDep(Ptr);
 	auto RetVal = Ptr++;
 	LastCachedFrame = -1;
-	AutoAddDep();
+	DepGraph::AutoAddDep(Ptr);
 	CachedAssertDep();
 	return RetVal;
-}
-
-void EntPtr::AutoAddDep() const
-{
-#if DEP_AUTO_DEPEND
-	if (Ptr)
-	{
-		auto Context = EntityContext::GetEntity();
-		if (Context)
-			DepGraph::AddDep(Context, Ptr);
-	}
-#endif
-}
-
-void EntPtr::AutoRemoveDep() const
-{
-#if DEP_AUTO_DEPEND
-	if (Ptr)
-	{
-		auto Context = EntityContext::GetEntity();
-		if (Context)
-			DepGraph::RemoveDep(Context, Ptr);
-	}
-#endif
 }
 
 void EntPtr::CachedAssertDep() const
@@ -355,9 +369,87 @@ void EntPtr::CachedAssertDep() const
 	if (LastCachedFrame != level.framenum)
 	{
 		LastCachedFrame = level.framenum;
-		AssertDep(Ptr);
+		DepGraph::AssertDep(Ptr);
 	}
 }
+
+// ===========================================================================
+
+WeakEntPtr::WeakEntPtr()
+	: Ptr(nullptr)
+{
+
+}
+
+WeakEntPtr::WeakEntPtr(const gentity_t *entity)
+	: Ptr(entity)
+{
+
+}
+
+WeakEntPtr::WeakEntPtr(const WeakEntPtr& Other)
+	: Ptr(Other.Ptr)
+{
+
+}
+
+WeakEntPtr::WeakEntPtr(const EntPtr& Other)
+	: Ptr(Other.Ptr)
+{
+
+}
+
+WeakEntPtr::~WeakEntPtr()
+{
+
+}
+
+WeakEntPtr& WeakEntPtr::operator=(const WeakEntPtr& Other)
+{
+	Ptr = Other.Ptr;
+	return *this;
+}
+
+WeakEntPtr& WeakEntPtr::operator=(const EntPtr& Other)
+{
+	Ptr = Other.Ptr;
+	return *this;
+}
+
+WeakEntPtr& WeakEntPtr::operator=(const gentity_t *entity)
+{
+	Ptr = entity;
+	return *this;
+}
+
+const gentity_t& WeakEntPtr::operator*() const
+{
+	return *Ptr;
+}
+
+const gentity_t *WeakEntPtr::operator->() const
+{
+	return Ptr;
+}
+
+WeakEntPtr::operator const gentity_t *() const
+{
+	return Ptr;
+}
+
+WeakEntPtr& WeakEntPtr::operator++()
+{
+	++Ptr;
+	return *this;
+}
+
+WeakEntPtr WeakEntPtr::operator++(int)
+{
+	auto RetVal = Ptr++;
+	return RetVal;
+}
+
+// ===========================================================================
 
 tbb::task *ProcessIslandsTask::execute()
 {

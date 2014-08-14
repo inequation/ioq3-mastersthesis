@@ -5,15 +5,19 @@
 #include <vector>
 #include <functional>
 
-// basic, dependency-enforcing entity smart pointer
+struct WeakEntPtr;
+
+// basic, update order-enforcing entity smart pointer
 struct EntPtr
 {
 	EntPtr();
 	EntPtr(gentity_t *entity);
 	EntPtr(const EntPtr& Other);
+	EntPtr(const WeakEntPtr& Other);
 	~EntPtr();
 
 	EntPtr& operator=(const EntPtr& Other);
+	EntPtr& operator=(const WeakEntPtr& Other);
 	EntPtr& operator=(gentity_t *entity);
 
 	gentity_t& operator*() const;
@@ -40,11 +44,58 @@ private:
 	gentity_t	*Ptr;
 	mutable int	LastCachedFrame;
 
-	void AutoAddDep() const;
-	void AutoRemoveDep() const;
 	void CachedAssertDep() const;
 
 	friend struct ScopedEntityContext;
+	friend struct WeakEntPtr;
+};
+
+// ===========================================================================
+
+// non-update order-enforcing, read-only entity smart pointer
+struct WeakEntPtr
+{
+	WeakEntPtr();
+	WeakEntPtr(const gentity_t *entity);
+	WeakEntPtr(const EntPtr& Other);
+	WeakEntPtr(const WeakEntPtr& Other);
+	~WeakEntPtr();
+
+	WeakEntPtr& operator=(const EntPtr& Other);
+	WeakEntPtr& operator=(const WeakEntPtr& Other);
+	WeakEntPtr& operator=(const gentity_t *entity);
+
+	const gentity_t& operator*() const;
+	const gentity_t *operator->() const;
+	operator const gentity_t *() const;
+	WeakEntPtr& operator++();
+	WeakEntPtr operator++(int);
+
+	const gentity_t *GetPtrNoCheck() const
+	{return Ptr;}
+	bool isNull() const
+	{return Ptr == nullptr;}
+
+	bool operator==(const EntPtr& Other) const
+	{return Ptr == Other.Ptr;}
+	bool operator!=(const EntPtr& Other) const
+	{return Ptr != Other.Ptr;}
+	bool operator==(const WeakEntPtr& Other) const
+	{return Ptr == Other.Ptr;}
+	bool operator!=(const WeakEntPtr& Other) const
+	{return Ptr != Other.Ptr;}
+	bool operator==(const gentity_t *entity) const
+	{return Ptr == entity;}
+	bool operator!=(const gentity_t *entity) const
+	{return Ptr != entity;}
+
+private:
+	const gentity_t	*Ptr;
+
+	void CachedAssertDep() const;
+
+	friend struct ScopedEntityContext;
+	friend struct EntPtr;
 };
 
 // ===========================================================================
