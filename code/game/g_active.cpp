@@ -236,7 +236,7 @@ Spectators will only interact with teleporters.
 void	G_TouchTriggers( EntPtr ent ) {
 	int			i, num;
 	int			touch[MAX_GENTITIES];
-	EntPtr	hit;
+	WeakEntPtr	hit;
 	trace_t		trace;
 	vec3_t		mins, maxs;
 	static vec3_t	range = { 40, 40, 52 };
@@ -294,11 +294,11 @@ void	G_TouchTriggers( EntPtr ent ) {
 		memset( &trace, 0, sizeof(trace) );
 
 		if ( hit->touch ) {
-			hit->touch (hit, ent, &trace);
+			hit->touch (EntPtr(hit), ent, &trace);
 		}
 
 		if ( ( ent->r.svFlags & SVF_BOT ) && ( ent->touch ) ) {
-			ent->touch( ent, hit, &trace );
+			ent->touch( ent, EntPtr(hit), &trace );
 		}
 	}
 

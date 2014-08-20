@@ -170,7 +170,7 @@ void Bullet_Fire (EntPtr ent, float spread, int damage, int mod ) {
 	float		r;
 	float		u;
 	EntPtr	tent;
-	EntPtr	traceEnt;
+	WeakEntPtr	traceEnt;
 	int			i, passent;
 
 	damage *= s_quadFactor;

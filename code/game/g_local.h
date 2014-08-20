@@ -470,14 +470,14 @@ int G_ModelIndex( char *name );
 int		G_SoundIndex( char *name );
 void	G_TeamCommand( team_t team, char *cmd );
 void	G_KillBox (EntPtr ent);
-EntPtr G_Find (EntPtr from, int fieldofs, const char *match);
-EntPtr G_PickTarget (char *targetname);
+WeakEntPtr G_Find(WeakEntPtr from, int fieldofs, const char *match);
+WeakEntPtr G_PickTarget (char *targetname);
 void	G_UseTargets (EntPtr ent, EntPtr activator);
 void	G_SetMovedir ( vec3_t angles, vec3_t movedir);
 
 void	G_InitGentity( EntPtr e );
 EntPtr	G_Spawn (void);
-EntPtr G_TempEntity( vec3_t origin, int event );
+EntPtr G_TempEntity( const vec3_t origin, int event );
 void	G_Sound( EntPtr ent, int channel, int soundIndex );
 void	G_FreeEntity( EntPtr e );
 qboolean	G_EntitiesFree( void );
@@ -583,7 +583,7 @@ void ClientSpawn( EntPtr ent );
 void player_die (EntPtr self, EntPtr inflictor, EntPtr attacker, int damage, int mod);
 void AddScore( EntPtr ent, vec3_t origin, int score );
 void CalculateRanks( void );
-qboolean SpotWouldTelefrag( EntPtr spot );
+qboolean SpotWouldTelefrag( WeakEntPtr spot );
 
 //
 // g_svcmds.c

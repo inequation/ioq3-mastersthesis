@@ -159,7 +159,7 @@ Calculate origin2 so the target apogee will be hit
 =================
 */
 void AimAtTarget( EntPtr self ) {
-	EntPtr	ent;
+	WeakEntPtr	ent;
 	vec3_t		origin;
 	float		height, gravity, time, forward;
 	float		dist;

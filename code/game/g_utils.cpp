@@ -160,7 +160,7 @@ NULL will be returned if the end of the list is reached.
 
 =============
 */
-EntPtr G_Find (EntPtr from, int fieldofs, const char *match)
+WeakEntPtr G_Find (WeakEntPtr from, int fieldofs, const char *match)
 {
 	char	*s;
 
@@ -173,7 +173,7 @@ EntPtr G_Find (EntPtr from, int fieldofs, const char *match)
 	{
 		if (!from->inuse)
 			continue;
-		s = *(char **) ((byte *)(const gentity_t *)from + fieldofs);
+		s = *(char **) ((byte *)from.GetPtrNoCheck() + fieldofs);
 		if (!s)
 			continue;
 		if (!Q_stricmp (s, match))
@@ -193,11 +193,11 @@ Selects a random entity from among the targets
 */
 #define MAXCHOICES	32
 
-EntPtr G_PickTarget (char *targetname)
+WeakEntPtr G_PickTarget(char *targetname)
 {
-	EntPtr	ent = NULL;
-	int		num_choices = 0;
-	EntPtr	choice[MAXCHOICES];
+	WeakEntPtr	ent = NULL;
+	int			num_choices = 0;
+	WeakEntPtr	choice[MAXCHOICES];
 
 	if (!targetname)
 	{
@@ -392,7 +392,7 @@ angles and bad trails.
 */
 EntPtr G_Spawn( void ) {
 	int			i, force;
-	EntPtr	e;
+	WeakEntPtr	e;
 
 	tbb::mutex::scoped_lock lock(g_spawnMutex); // lgodlewski
 
@@ -496,7 +496,7 @@ The origin will be snapped to save net bandwidth, so care
 must be taken if the origin is right on a surface (snap towards start vector first)
 =================
 */
-EntPtr G_TempEntity( vec3_t origin, int event ) {
+EntPtr G_TempEntity( const vec3_t origin, int event ) {
 	EntPtr		e;
 	vec3_t		snapped;
 
@@ -538,7 +538,7 @@ of ent.  Ent should be unlinked before calling this!
 void G_KillBox (EntPtr ent) {
 	int			i, num;
 	int			touch[MAX_GENTITIES];
-	EntPtr		hit;
+	WeakEntPtr	hit;
 	vec3_t		mins, maxs;
 
 	VectorAdd( ent->client->ps.origin, ent->r.mins, mins );

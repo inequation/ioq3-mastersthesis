@@ -418,6 +418,8 @@ Touch_Item
 void Touch_Item (EntPtr ent, EntPtr other, trace_t *trace) {
 	int			respawn;
 	qboolean	predict;
+	WeakEntPtr	went(ent);
+	WeakEntPtr	wother(other);
 
 	if (!other->client)
 		return;
@@ -425,11 +427,11 @@ void Touch_Item (EntPtr ent, EntPtr other, trace_t *trace) {
 		return;		// dead people can't pickup
 
 	// the same pickup rules are used for client side and server side
-	if ( !BG_CanItemBeGrabbed( g_gametype.integer, &ent->s, &other->client->ps ) ) {
+	if ( !BG_CanItemBeGrabbed( g_gametype.integer, &went->s, &wother->client->ps ) ) {
 		return;
 	}
 
-	G_LogPrintf( "Item: %i %s\n", other->s.number, ent->item->classname );
+	G_LogPrintf( "Item: %i %s\n", wother->s.number, went->item->classname );
 
 	predict = other->client->pers.predictItemPickup;
 

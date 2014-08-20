@@ -78,10 +78,10 @@ SpotWouldTelefrag
 
 ================
 */
-qboolean SpotWouldTelefrag( EntPtr spot ) {
+qboolean SpotWouldTelefrag( WeakEntPtr spot ) {
 	int			i, num;
 	int			touch[MAX_GENTITIES];
-	EntPtr	hit;
+	WeakEntPtr	hit;
 	vec3_t		mins, maxs;
 
 	VectorAdd( spot->s.origin, playerMins, mins );
@@ -181,11 +181,11 @@ Chooses a player start, deathmatch start, etc
 ============
 */
 EntPtr SelectRandomFurthestSpawnPoint ( vec3_t avoidPoint, vec3_t origin, vec3_t angles, qboolean isbot ) {
-	EntPtr	spot;
+	WeakEntPtr	spot;
 	vec3_t		delta;
 	float		dist;
 	float		list_dist[MAX_SPAWN_POINTS];
-	EntPtr	list_spot[MAX_SPAWN_POINTS];
+	WeakEntPtr	list_spot[MAX_SPAWN_POINTS];
 	int			numSpots, rnd, i, j;
 
 	numSpots = 0;
