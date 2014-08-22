@@ -1940,6 +1940,9 @@ void G_RunFrame( int levelTime ) {
 			}
 		});
 
+	// lgodlewski: commit all the queued changes
+	Mutation::CommitMutations();
+
 	// lgodlewski: flip the entity buffers
 	if (g_entities_old == g_entities)
 	{

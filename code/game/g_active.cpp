@@ -718,14 +718,16 @@ void SendPendingPredictableEvents( playerState_t *ps ) {
 		// create temporary entity for event
 		t = G_TempEntity( ps->origin, event );
 		number = t->s.number;
-		BG_PlayerStateToEntityState( ps, &t->s, qtrue );
-		t->s.number = number;
-		t->s.eType = ET_EVENTS + event;
-		t->s.eFlags |= EF_PLAYER_EVENT;
-		t->s.otherEntityNum = ps->clientNum;
+		entityState_t ts;
+		BG_PlayerStateToEntityState( ps, &ts, qtrue );
+		ts.number = number;
+		ts.eType = ET_EVENTS + event;
+		ts.eFlags |= EF_PLAYER_EVENT;
+		ts.otherEntityNum = ps->clientNum;
 		// send to everyone except the client who generated the event
-		t->r.svFlags |= SVF_NOTSINGLECLIENT;
-		t->r.singleClient = ps->clientNum;
+		Mutation::Set(t, FOFS(r.svFlags), t->r.svFlags | SVF_NOTSINGLECLIENT);
+		Mutation::Set(t, FOFS(r.singleClient), ps->clientNum);
+		Mutation::Set(t, FOFS(s), ts);
 		// set back external event
 		ps->externalEvent = extEvent;
 	}

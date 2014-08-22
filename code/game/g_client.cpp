@@ -1235,7 +1235,7 @@ void ClientSpawn(EntPtr ent) {
 			VectorCopy(ent->client->ps.origin, ent->r.currentOrigin);
 
 			tent = G_TempEntity(ent->client->ps.origin, EV_PLAYER_TELEPORT_IN);
-			tent->s.clientNum = ent->s.clientNum;
+			Mutation::Set(tent, FOFS(s.clientNum), ent->s.clientNum);
 
 			trap_LinkEntity (ent);
 		}

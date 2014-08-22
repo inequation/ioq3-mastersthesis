@@ -35,11 +35,11 @@ void ScorePlum( EntPtr ent, vec3_t origin, int score ) {
 
 	plum = G_TempEntity( origin, EV_SCOREPLUM );
 	// only send this temp entity to a single client
-	plum->r.svFlags |= SVF_SINGLECLIENT;
-	plum->r.singleClient = ent->s.number;
+	Mutation::Set(plum, FOFS(r.svFlags), plum->r.svFlags | SVF_SINGLECLIENT);
+	Mutation::Set(plum, FOFS(r.singleClient), ent->s.number);
 	//
-	plum->s.otherEntityNum = ent->s.number;
-	plum->s.time = score;
+	Mutation::Set(plum, FOFS(s.otherEntityNum), ent->s.number);
+	Mutation::Set(plum, FOFS(s.time), score);
 }
 
 /*
@@ -462,7 +462,7 @@ void player_die( EntPtr self, EntPtr inflictor, EntPtr attacker, int damage, int
 		self->activator->nextthink = level.time;
 	}
 #endif
-	self->client->ps.pm_type = PM_DEAD;
+	Mutation::Set(self->client, offsetof(gclient_s, ps.pm_type), PM_DEAD);
 
 	if ( attacker ) {
 		killer = attacker->s.number;
@@ -493,14 +493,14 @@ void player_die( EntPtr self, EntPtr inflictor, EntPtr attacker, int damage, int
 
 	// broadcast the death event to everyone
 	ent = G_TempEntity( self->r.currentOrigin, EV_OBITUARY );
-	ent->s.eventParm = meansOfDeath;
-	ent->s.otherEntityNum = self->s.number;
-	ent->s.otherEntityNum2 = killer;
-	ent->r.svFlags = SVF_BROADCAST;	// send to everyone
+	Mutation::Set(ent, FOFS(s.eventParm), meansOfDeath);
+	Mutation::Set(ent, FOFS(s.otherEntityNum), self->s.number);
+	Mutation::Set(ent, FOFS(s.otherEntityNum2), killer);
+	Mutation::Set(ent, FOFS(r.svFlags), SVF_BROADCAST);	// send to everyone
 
-	self->enemy = attacker;
+	Mutation::Set(self, FOFS(enemy), attacker);
 
-	self->client->ps.persistant[PERS_KILLED]++;
+	Mutation::Set(self->client, offsetof(gclient_s, ps.persistant[PERS_KILLED]), self->client->ps.persistant[PERS_KILLED] + 1);
 
 	if (attacker && attacker->client) {
 		attacker->client->lastkilled_client = self->s.number;
@@ -521,7 +521,7 @@ void player_die( EntPtr self, EntPtr inflictor, EntPtr attacker, int damage, int
 				attacker->client->rewardTime = level.time + REWARD_SPRITE_TIME;
 
 				// also play humiliation on target
-				self->client->ps.persistant[PERS_PLAYEREVENTS] ^= PLAYEREVENT_GAUNTLETREWARD;
+				Mutation::Set(self->client, offsetof(gclient_s, ps.persistant[PERS_PLAYEREVENTS]), self->client->ps.persistant[PERS_PLAYEREVENTS] ^= PLAYEREVENT_GAUNTLETREWARD);
 			}
 
 			// check for two kills in a short amount of time
@@ -587,28 +587,28 @@ void player_die( EntPtr self, EntPtr inflictor, EntPtr attacker, int damage, int
 		}
 	}
 
-	self->takedamage = qtrue;	// can still be gibbed
+	Mutation::Set(self, FOFS(takedamage), qtrue);	// can still be gibbed
 
-	self->s.weapon = WP_NONE;
-	self->s.powerups = 0;
-	self->r.contents = CONTENTS_CORPSE;
+	Mutation::Set(self, FOFS(s.weapon), WP_NONE);
+	Mutation::Set(self, FOFS(s.powerups), 0);
+	Mutation::Set(self, FOFS(r.contents), CONTENTS_CORPSE);
 
-	self->s.angles[0] = 0;
-	self->s.angles[2] = 0;
+	Mutation::Set(self, FOFS(s.angles[0]), 0);
+	Mutation::Set(self, FOFS(s.angles[2]), 0);
 	LookAtKiller (self, inflictor, attacker);
 
-	VectorCopy( self->s.angles, self->client->ps.viewangles );
+	Mutation::Set(self->client, offsetof(gclient_s, ps.viewangles), self->s.angles);
 
-	self->s.loopSound = 0;
+	Mutation::Set(self, FOFS(s.loopSound), 0);
 
-	self->r.maxs[2] = -8;
+	Mutation::Set(self, FOFS(r.maxs[2]), -8);
 
 	// don't allow respawn until the death anim is done
 	// g_forcerespawn may force spawning at some later time
-	self->client->respawnTime = level.time + 1700;
+	Mutation::Set(self->client, offsetof(gclient_s, respawnTime), level.time + 1700);
 
 	// remove powerups
-	memset( self->client->ps.powerups, 0, sizeof(self->client->ps.powerups) );
+	Mutation::ClearBytes(self->client, offsetof(gclient_s, ps.powerups), sizeof(self->client->ps.powerups));
 
 	// never gib in a nodrop
 	contents = trap_PointContents( self->r.currentOrigin, -1 );
@@ -636,18 +636,18 @@ void player_die( EntPtr self, EntPtr inflictor, EntPtr attacker, int damage, int
 		// for the no-blood option, we need to prevent the health
 		// from going to gib level
 		if ( self->health <= GIB_HEALTH ) {
-			self->health = GIB_HEALTH+1;
+			Mutation::Set(self, FOFS(health), GIB_HEALTH+1);
 		}
 
-		self->client->ps.legsAnim = 
-			( ( self->client->ps.legsAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
-		self->client->ps.torsoAnim = 
-			( ( self->client->ps.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
+		Mutation::Set(self->client, offsetof(gclient_s, ps.legsAnim),
+			( ( self->client->ps.legsAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim);
+		Mutation::Set(self->client, offsetof(gclient_s, ps.torsoAnim),
+			( ( self->client->ps.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim);
 
 		G_AddEvent( self, EV_DEATH1 + i, killer );
 
 		// the body can still be gibbed
-		self->die = body_die;
+		Mutation::Set(self, FOFS(die), body_die);
 
 		// globally cycle through the different death animations
 		i = ( i + 1 ) % 3;
@@ -1025,19 +1025,20 @@ void G_Damage( EntPtr targ, EntPtr inflictor, EntPtr attacker,
 
 	// do the damage
 	if (take) {
-		targ->health = targ->health - take;
+		Mutation::Set(targ, FOFS(health), targ->health - take);
 		if ( targ->client ) {
-			targ->client->ps.stats[STAT_HEALTH] = targ->health;
+			Mutation::Set(targ->client, offsetof(gclient_s, ps.stats[STAT_HEALTH]), targ->health);
 		}
 			
 		if ( targ->health <= 0 ) {
 			if ( client )
-				targ->flags |= FL_NO_KNOCKBACK;
+				Mutation::Set(targ, FOFS(flags), targ->flags | FL_NO_KNOCKBACK);
 
 			if (targ->health < -999)
-				targ->health = -999;
+				Mutation::Set(targ, FOFS(health), -999);
 
-			targ->enemy = attacker;
+			Mutation::Set(targ, FOFS(enemy), attacker);
+			#warning FIXME: lgodlewski: schedule this callback for commit-time?
 			targ->die (targ, inflictor, attacker, take, mod);
 			return;
 		} else if ( targ->pain ) {

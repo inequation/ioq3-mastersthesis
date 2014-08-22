@@ -198,15 +198,15 @@ void Bullet_Fire (EntPtr ent, float spread, int damage, int mod ) {
 		// send bullet impact
 		if ( traceEnt->takedamage && traceEnt->client ) {
 			tent = G_TempEntity( tr.endpos, EV_BULLET_HIT_FLESH );
-			tent->s.eventParm = traceEnt->s.number;
+			Mutation::Set(tent, FOFS(s.eventParm), traceEnt->s.number);
 			if( LogAccuracyHit( traceEnt, ent ) ) {
 				ent->client->accuracy_hits++;
 			}
 		} else {
 			tent = G_TempEntity( tr.endpos, EV_BULLET_HIT_WALL );
-			tent->s.eventParm = DirToByte( tr.plane.normal );
+			Mutation::Set(tent, FOFS(s.eventParm), DirToByte( tr.plane.normal ));
 		}
-		tent->s.otherEntityNum = ent->s.number;
+		Mutation::Set(tent, FOFS(s.otherEntityNum), ent->s.number);
 
 		if ( traceEnt->takedamage) {
 #ifdef MISSIONPACK

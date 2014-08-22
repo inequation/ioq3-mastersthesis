@@ -169,7 +169,7 @@ EntPtr G_Find (EntPtr from, int fieldofs, const char *match)
 	else
 		from++;
 
-	for ( ; from < &g_entities[level.num_entities] ; from++)
+	for ( ; from.GetRWPointer() < &g_entities[level.num_entities] ; from++)
 	{
 		if (!from->inuse)
 			continue;
@@ -369,10 +369,10 @@ float vectoyaw( const vec3_t vec ) {
 
 
 void G_InitGentity( EntPtr e ) {
-	e->inuse = qtrue;
-	e->classname = "noclass";
-	e->s.number = e - g_entities;
-	e->r.ownerNum = ENTITYNUM_NONE;
+	Mutation::Set(e, FOFS(inuse), qtrue);
+	Mutation::Set(e, FOFS(classname), "noclass");
+	Mutation::Set(e, FOFS(s.number), e - g_entities);
+	Mutation::Set(e, FOFS(r.ownerNum), ENTITYNUM_NONE);
 }
 
 /*
@@ -501,11 +501,11 @@ EntPtr G_TempEntity( vec3_t origin, int event ) {
 	vec3_t		snapped;
 
 	e = G_Spawn();
-	e->s.eType = ET_EVENTS + event;
+	Mutation::Set(e, FOFS(s.eType), ET_EVENTS + event);
 
-	e->classname = "tempEntity";
-	e->eventTime = level.time;
-	e->freeAfterEvent = qtrue;
+	Mutation::Set(e, FOFS(classname), "tempEntity");
+	Mutation::Set(e, FOFS(eventTime), level.time);
+	Mutation::Set(e, FOFS(freeAfterEvent), qtrue);
 
 	VectorCopy( origin, snapped );
 	SnapVector( snapped );		// save network bandwidth
@@ -633,13 +633,13 @@ Sets the pos trajectory for a fixed position
 ================
 */
 void G_SetOrigin( EntPtr ent, vec3_t origin ) {
-	VectorCopy( origin, ent->s.pos.trBase );
-	ent->s.pos.trType = TR_STATIONARY;
-	ent->s.pos.trTime = 0;
-	ent->s.pos.trDuration = 0;
-	VectorClear( ent->s.pos.trDelta );
+	Mutation::Set(ent, FOFS(s.pos.trBase), origin);
+	Mutation::Set(ent, FOFS(s.pos.trType), TR_STATIONARY);
+	Mutation::Set(ent, FOFS(s.pos.trTime), 0);
+	Mutation::Set(ent, FOFS(s.pos.trDuration), 0);
+	Mutation::ClearBytes(ent, FOFS(s.pos.trDelta), sizeof(vec3_t) );
 
-	VectorCopy( origin, ent->r.currentOrigin );
+	Mutation::Set(ent, FOFS(r.currentOrigin), origin);
 }
 
 /*
