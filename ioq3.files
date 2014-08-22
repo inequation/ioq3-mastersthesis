@@ -146,7 +146,6 @@ code/game/bg_lib.h
 code/game/bg_local.h
 code/game/bg_public.h
 code/game/chars.h
-code/game/EntPtr.h
 code/game/g_active.cpp
 code/game/g_arenas.cpp
 code/game/g_bot.cpp
@@ -901,7 +900,6 @@ code/zlib/zlib.h
 code/zlib/zutil.c
 code/zlib/zutil.h
 ui/menudef.h
-code/game/EntPtr.cpp
 Makefile
 code/game/bg_lib.c
 code/game/bg_lib.h
@@ -910,3 +908,5 @@ code/game/bg_misc.c
 code/game/bg_pmove.c
 code/game/bg_public.h
 code/game/bg_slidemove.c
+code/game/DoubleBuffering.cpp
+code/game/DoubleBuffering.h
