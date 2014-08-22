@@ -94,22 +94,24 @@ sharedEntity_t *SV_WritableGEntityForSvEntity( svEntity_t *svEnt ) {
 
 sharedEntity_t *SV_WritableGentity( const sharedEntity_t *gEnt ) {
 	int num;
-	sharedEntity_t *ent;
 
 	num = ((byte *)gEnt - (byte *)sv.gentities) / sv.gentitySize;
-	ent = (sharedEntity_t *)((byte *)sv.gentities_writable + sv.gentitySize*(num));
+	// lgodlewski: only convert if not writable yet
+	if (num < 0 || num >= sv.num_entities)
+		return (sharedEntity_t *)gEnt;
 
-	return ent;
+	return (sharedEntity_t *)((byte *)sv.gentities_writable + sv.gentitySize*(num));
 }
 
 playerState_t *SV_WritableGameClient( playerState_t *cl ) {
 	int num;
-	playerState_t	*ps;
 
 	num = ((byte *)cl - (byte *)sv.gameClients) / sv.gameClientSize;
-	ps = (playerState_t *)((byte *)sv.gameClients_writable + sv.gameClientSize*(num));
+	// lgodlewski: only convert if not writable yet
+	if (num < 0 || num >= MAX_CLIENTS)
+		return (playerState_t *)cl;
 
-	return ps;
+	return (playerState_t *)((byte *)sv.gameClients_writable + sv.gameClientSize*(num));
 }
 
 /*

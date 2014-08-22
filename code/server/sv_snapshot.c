@@ -317,7 +317,7 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 	clientpvs = CM_ClusterPVS (clientcluster);
 
 	for ( e = 0 ; e < sv.num_entities ; e++ ) {
-		ent = SV_GentityNum(e);
+		ent = SV_WritableGentityNum(e);
 
 		// never send entities that aren't linked in
 		if ( !ent->r.linked ) {

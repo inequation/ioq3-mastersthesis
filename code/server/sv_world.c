@@ -169,6 +169,8 @@ void SV_UnlinkEntity( sharedEntity_t *gEnt ) {
 	svEntity_t		*scan;
 	worldSector_t	*ws;
 
+	gEnt = SV_WritableGentity(gEnt);	// lgodlewski
+
 	ent = SV_SvEntityForGentity( gEnt );
 
 	gEnt->r.linked = qfalse;
@@ -212,6 +214,8 @@ void SV_LinkEntity( sharedEntity_t *gEnt ) {
 	int			lastLeaf;
 	float		*origin, *angles;
 	svEntity_t	*ent;
+
+	gEnt = SV_WritableGentity(gEnt);	// lgodlewski
 
 	ent = SV_SvEntityForGentity( gEnt );
 
@@ -385,7 +389,7 @@ static void SV_AreaEntities_r( worldSector_t *node, areaParms_t *ap ) {
 	for ( check = node->entities  ; check ; check = next ) {
 		next = check->nextEntityInWorldSector;
 
-		gcheck = SV_GEntityForSvEntity( check );
+		gcheck = SV_WritableGEntityForSvEntity( check );
 
 		if ( gcheck->r.absmin[0] > ap->maxs[0]
 		|| gcheck->r.absmin[1] > ap->maxs[1]
