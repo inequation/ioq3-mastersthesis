@@ -1427,6 +1427,7 @@ int BotAIStartFrame(int time) {
 					if( !botstates[i] || !botstates[i]->inuse ) {
 						continue;
 					}
+					ScopedEntityContext context(&g_entities[i]);	// lgodlewski
 					if( g_entities[i].client->pers.connected != CON_CONNECTED ) {
 						continue;
 					}
@@ -1483,6 +1484,7 @@ int BotAIStartFrame(int time) {
 				EntPtr ent;
 				bot_entitystate_t state;
 				for (int i = r.begin(); i != r.end(); i++) {
+					ScopedEntityContext context(&g_entities[i]);	// lgodlewski
 					ent = &g_entities[i];
 					if (!ent->inuse) {
 						trap_BotLibUpdateEntity(i, NULL);
@@ -1565,6 +1567,8 @@ int BotAIStartFrame(int time) {
 				if ( botstates[i]->botthink_residual >= thinktime ) {
 					botstates[i]->botthink_residual -= thinktime;
 
+					ScopedEntityContext context(&g_entities[i]);	// lgodlewski
+
 					if (!trap_AAS_Initialized()) {
 						retval = qfalse;
 						break;
@@ -1585,6 +1589,7 @@ int BotAIStartFrame(int time) {
 				if( !botstates[i] || !botstates[i]->inuse ) {
 					continue;
 				}
+				ScopedEntityContext context(&g_entities[i]);	// lgodlewski
 				if( g_entities[i].client->pers.connected != CON_CONNECTED ) {
 					continue;
 				}

@@ -1866,8 +1866,9 @@ void G_RunFrame( int levelTime ) {
 	//
 	tbb::parallel_for(tbb::blocked_range<int>(0, level.num_entities),
 		[=](const tbb::blocked_range<int>& r) {
-			EntPtr ent = &g_entities[r.begin()];
-			for (int i=r.begin() ; i!=r.end() ; i++, ent++) {
+			for (int i=r.begin() ; i!=r.end() ; i++) {
+				ScopedEntityContext context(&g_entities[i]);	// lgodlewski
+				EntPtr ent = &g_entities[i];
 				if ( !ent->inuse ) {
 					continue;
 				}
@@ -1930,8 +1931,9 @@ void G_RunFrame( int levelTime ) {
 	// perform final fixups on the players
 	tbb::parallel_for(tbb::blocked_range<int>(0, level.maxclients),
 		[=](const tbb::blocked_range<int>& r) {
-			EntPtr ent = &g_entities[r.begin()];
-			for (int i=r.begin() ; i != r.end() ; i++, ent++ ) {
+			for (int i=r.begin() ; i != r.end() ; i++ ) {
+				ScopedEntityContext context(&g_entities[i]);	// lgodlewski
+				EntPtr ent = &g_entities[r.begin()];
 				if ( ent->inuse ) {
 					ClientEndFrame( ent );
 				}
