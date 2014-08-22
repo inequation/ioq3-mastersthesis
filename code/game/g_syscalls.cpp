@@ -38,6 +38,7 @@ static tbb::mutex g_printMutex;
 static tbb::mutex g_FSMutex;
 static tbb::mutex g_cvarMutex;
 static tbb::mutex g_botlibMutex;
+static tbb::mutex g_linkMutex;
 
 Q_EXPORT void dllEntry( intptr_t (QDECL *syscallptr)( intptr_t arg,... ) ) {
 	g_syscall = syscallptr;
@@ -179,7 +180,7 @@ void trap_GetServerinfo( char *buffer, int bufferSize ) {
 }
 
 void trap_SetBrushModel( gentity_t *ent, const char *name ) {
-	//tbb::recursive_mutex::scoped_lock lock(g_syscallMutex);	// lgodlewski
+	tbb::mutex::scoped_lock lock(g_linkMutex);	// lgodlewski
 	g_syscall( G_SET_BRUSH_MODEL, ent, name );
 }
 
@@ -220,12 +221,12 @@ qboolean trap_AreasConnected( int area1, int area2 ) {
 }
 
 void trap_LinkEntity( gentity_t *ent ) {
-	//tbb::recursive_mutex::scoped_lock lock(g_syscallMutex);	// lgodlewski
+	tbb::mutex::scoped_lock lock(g_linkMutex);	// lgodlewski
 	g_syscall( G_LINKENTITY, ent );
 }
 
 void trap_UnlinkEntity( gentity_t *ent ) {
-	//tbb::recursive_mutex::scoped_lock lock(g_syscallMutex);	// lgodlewski
+	tbb::mutex::scoped_lock lock(g_linkMutex);	// lgodlewski
 	g_syscall( G_UNLINKENTITY, ent );
 }
 
