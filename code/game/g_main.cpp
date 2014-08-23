@@ -212,8 +212,24 @@ struct gameTimeMeasurement
 
 		delta = diff(start, end);
 
+		qboolean is_dedicated =
+#ifdef DEDICATED
+			qtrue
+#else
+			(qboolean)(trap_Cvar_VariableIntegerValue("dedicated") != 0)
+#endif
+			;
+
+
 		// store microseconds in the cvar
-		trap_Cvar_Set(buf, va("%d", (int)(delta.tv_nsec / 1000 + delta.tv_sec * 1000000)));
+		// if this is a dedicated server, accumulate
+		if (is_dedicated)
+		{
+			int previous = trap_Cvar_VariableIntegerValue(buf);
+			trap_Cvar_Set(buf, va("%d", previous + (int)(delta.tv_nsec / 1000 + delta.tv_sec * 1000000)));
+		}
+		else
+			trap_Cvar_Set(buf, va("%d", (int)(delta.tv_nsec / 1000 + delta.tv_sec * 1000000)));
 
 		if (command == GAME_RUN_FRAME || command == GAME_SHUTDOWN)
 		{
@@ -232,6 +248,22 @@ struct gameTimeMeasurement
 				trap_Cvar_VariableIntegerValue("g_timeSpent8"),
 				trap_Cvar_VariableIntegerValue("g_timeSpent9"),
 				trap_Cvar_VariableIntegerValue("g_timeSpent10"));
+
+			// if this is a dedicated server, clear all cvars so that they don't linger
+			if (is_dedicated)
+			{
+				trap_Cvar_Set("g_timeSpent0", "0");
+				trap_Cvar_Set("g_timeSpent1", "0");
+				trap_Cvar_Set("g_timeSpent2", "0");
+				trap_Cvar_Set("g_timeSpent3", "0");
+				trap_Cvar_Set("g_timeSpent4", "0");
+				trap_Cvar_Set("g_timeSpent5", "0");
+				trap_Cvar_Set("g_timeSpent6", "0");
+				trap_Cvar_Set("g_timeSpent7", "0");
+				trap_Cvar_Set("g_timeSpent8", "0");
+				trap_Cvar_Set("g_timeSpent9", "0");
+				trap_Cvar_Set("g_timeSpent10", "0");
+			}
 		}
 	}
 
@@ -1311,7 +1343,8 @@ void LogExit( const char *string ) {
 	}
 #endif
 
-
+	// lgodlewski: quit the game immediately
+	trap_SendConsoleCommand(EXEC_APPEND, "quit\n");
 }
 
 
