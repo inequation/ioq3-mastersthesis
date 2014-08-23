@@ -208,6 +208,25 @@ struct gameTimeMeasurement
 
 		// store microseconds in the cvar
 		trap_Cvar_Set(buf, va("%d", (int)(delta.tv_nsec / 1000 + delta.tv_sec * 1000000)));
+
+		if (command == GAME_RUN_FRAME || command == GAME_SHUTDOWN)
+		{
+			// log end-of-frame stats
+			G_LogPrintf("%s FRAME TIMES:%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
+				(command == GAME_RUN_FRAME) ? "REG" : "END",
+				level.framenum,
+				trap_Cvar_VariableIntegerValue("g_timeSpent0"),
+				trap_Cvar_VariableIntegerValue("g_timeSpent1"),
+				trap_Cvar_VariableIntegerValue("g_timeSpent2"),
+				trap_Cvar_VariableIntegerValue("g_timeSpent3"),
+				trap_Cvar_VariableIntegerValue("g_timeSpent4"),
+				trap_Cvar_VariableIntegerValue("g_timeSpent5"),
+				trap_Cvar_VariableIntegerValue("g_timeSpent6"),
+				trap_Cvar_VariableIntegerValue("g_timeSpent7"),
+				trap_Cvar_VariableIntegerValue("g_timeSpent8"),
+				trap_Cvar_VariableIntegerValue("g_timeSpent9"),
+				trap_Cvar_VariableIntegerValue("g_timeSpent10"));
+		}
 	}
 
 	struct timespec diff(timespec start, timespec end)
