@@ -317,18 +317,18 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu"))
     -pipe -DUSE_ICON
   CLIENT_CFLAGS += $(SDL_CFLAGS)
 
-  OPTIMIZEVM = -O3 -funroll-loops -fomit-frame-pointer
+  OPTIMIZEVM = -O3 -g -funroll-loops -fno-omit-frame-pointer
   OPTIMIZE = $(OPTIMIZEVM) -ffast-math
 
   ifeq ($(ARCH),x86_64)
-    OPTIMIZEVM = -O3 -fomit-frame-pointer -funroll-loops \
+	OPTIMIZEVM = -O3 -g -fno-omit-frame-pointer -funroll-loops \
       -falign-loops=2 -falign-jumps=2 -falign-functions=2 \
       -fstrength-reduce
     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
     HAVE_VM_COMPILED = true
   else
   ifeq ($(ARCH),x86)
-    OPTIMIZEVM = -O3 -march=i586 -fomit-frame-pointer \
+	OPTIMIZEVM = -O3 -g -march=i586 -fno-omit-frame-pointer \
       -funroll-loops -falign-loops=2 -falign-jumps=2 \
       -falign-functions=2 -fstrength-reduce
     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
@@ -410,7 +410,7 @@ ifeq ($(PLATFORM),darwin)
 
   ifeq ($(ARCH),ppc)
     BASE_CFLAGS += -arch ppc -faltivec -mmacosx-version-min=10.2
-    OPTIMIZEVM += -O3
+	OPTIMIZEVM += -O3 -g
   endif
   ifeq ($(ARCH),ppc64)
     BASE_CFLAGS += -arch ppc64 -faltivec -mmacosx-version-min=10.2
@@ -554,14 +554,14 @@ ifeq ($(PLATFORM),mingw32)
   endif
 
   ifeq ($(ARCH),x86_64)
-    OPTIMIZEVM = -O3 -fno-omit-frame-pointer \
+	OPTIMIZEVM = -O3 -g -fno-omit-frame-pointer \
       -falign-loops=2 -funroll-loops -falign-jumps=2 -falign-functions=2 \
       -fstrength-reduce
     OPTIMIZE = $(OPTIMIZEVM) --fast-math
     HAVE_VM_COMPILED = true
   endif
   ifeq ($(ARCH),x86)
-    OPTIMIZEVM = -O3 -march=i586 -fno-omit-frame-pointer \
+	OPTIMIZEVM = -O3 -g -march=i586 -fno-omit-frame-pointer \
       -falign-loops=2 -funroll-loops -falign-jumps=2 -falign-functions=2 \
       -fstrength-reduce
     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
@@ -651,7 +651,7 @@ ifeq ($(PLATFORM),freebsd)
   CLIENT_CFLAGS += $(SDL_CFLAGS)
   HAVE_VM_COMPILED = true
 
-  OPTIMIZEVM = -O3 -funroll-loops -fomit-frame-pointer
+  OPTIMIZEVM = -O3 -g -funroll-loops -fno-omit-frame-pointer
   OPTIMIZE = $(OPTIMIZEVM) -ffast-math
 
   SHLIBEXT=so
@@ -703,18 +703,18 @@ ifeq ($(PLATFORM),openbsd)
     -pipe -DUSE_ICON -DMAP_ANONYMOUS=MAP_ANON
   CLIENT_CFLAGS += $(SDL_CFLAGS)
 
-  OPTIMIZEVM = -O3 -funroll-loops -fomit-frame-pointer
+  OPTIMIZEVM = -O3 -g -funroll-loops -fno-omit-frame-pointer
   OPTIMIZE = $(OPTIMIZEVM) -ffast-math
 
   ifeq ($(ARCH),x86_64)
-    OPTIMIZEVM = -O3 -fomit-frame-pointer -funroll-loops \
+	OPTIMIZEVM = -O3 -g -fno-omit-frame-pointer -funroll-loops \
       -falign-loops=2 -falign-jumps=2 -falign-functions=2 \
       -fstrength-reduce
     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
     HAVE_VM_COMPILED = true
   else
   ifeq ($(ARCH),x86)
-    OPTIMIZEVM = -O3 -march=i586 -fomit-frame-pointer \
+	OPTIMIZEVM = -O3 -g -march=i586 -fno-omit-frame-pointer \
       -funroll-loops -falign-loops=2 -falign-jumps=2 \
       -falign-functions=2 -fstrength-reduce
     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
@@ -809,7 +809,7 @@ ifeq ($(PLATFORM),irix64)
   BASE_CFLAGS=-Dstricmp=strcasecmp -Xcpluscomm -woff 1185 \
     -I. -I$(ROOT)/usr/include
   CLIENT_CFLAGS += $(SDL_CFLAGS)
-  OPTIMIZE = -O3
+  OPTIMIZE = -O3 -g
 
   SHLIBEXT=so
   SHLIBCFLAGS=
@@ -844,16 +844,16 @@ ifeq ($(PLATFORM),sunos)
     -pipe -DUSE_ICON
   CLIENT_CFLAGS += $(SDL_CFLAGS)
 
-  OPTIMIZEVM = -O3 -funroll-loops
+  OPTIMIZEVM = -O3 -g -funroll-loops
 
   ifeq ($(ARCH),sparc)
-    OPTIMIZEVM += -O3 \
+	OPTIMIZEVM += -O3 -g \
       -fstrength-reduce -falign-functions=2 \
       -mtune=ultrasparc3 -mv8plus -mno-faster-structs
     HAVE_VM_COMPILED=true
   else
   ifeq ($(ARCH),x86)
-    OPTIMIZEVM += -march=i586 -fomit-frame-pointer \
+	OPTIMIZEVM += -march=i586 -fno-omit-frame-pointer \
       -falign-loops=2 -falign-jumps=2 \
       -falign-functions=2 -fstrength-reduce
     HAVE_VM_COMPILED=true
@@ -883,7 +883,7 @@ else # ifeq sunos
 # SETUP AND BUILD -- GENERIC
 #############################################################################
   BASE_CFLAGS=
-  OPTIMIZE = -O3
+  OPTIMIZE = -O3 -g
 
   SHLIBEXT=so
   SHLIBCFLAGS=-fPIC
