@@ -27,6 +27,8 @@ using namespace boost;
 	#else
 		#define DEP_ASSERT(Cond, Fmt, ...)	{if (!(Cond)) G_Printf("[DepGraph] WARNING: " Fmt "\n", __VA_ARGS__);}
 	#endif
+#else
+	#define DEP_ASSERT(Cond, Fmt, ...)
 #endif
 
 tbb::enumerable_thread_specific<gentity_t *> EntityContext::Context;
